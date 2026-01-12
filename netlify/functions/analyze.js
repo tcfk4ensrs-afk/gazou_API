@@ -8,17 +8,11 @@ exports.handler = async (event, context) => {
         const API_KEY = process.env.GEMINI_API_KEY;
 
         if (!API_KEY) {
-            return { 
-                statusCode: 500, 
-                body: JSON.stringify({ error: "Netlifyの環境変数にAPIキーが設定されていません。" }) 
-            };
+            return { statusCode: 500, body: JSON.stringify({ error: "APIキーが設定されていません。" }) };
         }
 
-        // 画像のバージョン（Gemini 3 Flash）に合わせてモデル名を変更
-        const MODEL = "gemini-3-flash"; 
-        
-        // 最新モデルを使用するため、エンドポイントを確認（必要に応じて v1beta に変更）
-        const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${API_KEY}`;
+        // 最も安定している v1 エンドポイントを使用
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
         const response = await fetch(url, {
             method: 'POST',
@@ -31,7 +25,7 @@ exports.handler = async (event, context) => {
                     ]
                 }],
                 generationConfig: {
-                    temperature: 0.1,
+                    temperature: 0.1, // 回答を安定させる
                     maxOutputTokens: 100
                 }
             })
@@ -40,11 +34,7 @@ exports.handler = async (event, context) => {
         const data = await response.json();
 
         if (data.error) {
-            console.error("Gemini API Error Detail:", data.error);
-            return { 
-                statusCode: 400, 
-                body: JSON.stringify({ error: `Google APIエラー: ${data.error.message}` }) 
-            };
+            return { statusCode: 400, body: JSON.stringify({ error: data.error.message }) };
         }
 
         return {
@@ -54,10 +44,6 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        console.error("Internal Server Error:", error.message);
-        return { 
-            statusCode: 500, 
-            body: JSON.stringify({ error: "サーバー側で予期せぬエラーが発生しました。" }) 
-        };
+        return { statusCode: 500, body: JSON.stringify({ error: "通信エラーが発生しました。" }) };
     }
 };
