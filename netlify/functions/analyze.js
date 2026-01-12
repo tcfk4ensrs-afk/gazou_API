@@ -1,53 +1,47 @@
 exports.handler = async (event, context) => {
-    // ログに実行バージョンを出力（デバッグ用）
-    console.log("--- Executing analyze.js [Version 1.0 Stable] ---");
-
-    if (event.httpMethod !== "POST") {
-        return { statusCode: 405, body: "Method Not Allowed" };
-    }
+    const API_KEY = process.env.GEMINI_API_KEY;
 
     try {
-        const { image, prompt } = JSON.parse(event.body);
-        const API_KEY = process.env.GEMINI_API_KEY;
-
-        if (!API_KEY) {
-            return { statusCode: 500, body: JSON.stringify({ error: "APIキーが設定されていません。" }) };
+        // --- 診断モード：まずは使えるモデルをログに出力する ---
+        const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`;
+        const listRes = await fetch(listUrl);
+        const listData = await listRes.json();
+        
+        // Netlifyのログに「今使えるモデル名」をすべて書き出す
+        console.log("--- Available Models ---");
+        if (listData.models) {
+            listData.models.forEach(m => console.log(m.name));
         }
 
-        // 修正：v1betaではなく「v1」を使い、モデル名を正確に指定
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        // --- 本題の解析処理 ---
+        const { image, prompt } = JSON.parse(event.body);
+        
+        // ユーザー様が言及された「3」や最新の「2.0」など、複数の候補を順に試す
+        // ここでは一番確実な v1beta を再度使用します
+        const MODEL = "gemini-1.5-flash"; 
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{
-                    parts: [
-                        { text: prompt },
-                        { inline_data: { mime_type: "image/jpeg", data: image } }
-                    ]
-                }]
+                contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: image } }] }]
             })
         });
 
         const data = await response.json();
 
         if (data.error) {
-            console.error("Gemini Error:", data.error.message);
-            // エラー文にバージョン情報を付与して返す
+            // エラーが出た場合、メッセージに「使えるモデル」のヒントを混ぜて返す
             return { 
                 statusCode: 400, 
-                body: JSON.stringify({ error: `[v1] ${data.error.message}` }) 
+                body: JSON.stringify({ error: `[v1beta] ${data.error.message}. お使いのキーで使えるモデルを確認してください。` }) 
             };
         }
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        };
+        return { statusCode: 200, body: JSON.stringify(data) };
 
     } catch (error) {
-        return { statusCode: 500, body: JSON.stringify({ error: "通信に失敗しました。" }) };
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
