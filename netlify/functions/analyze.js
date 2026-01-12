@@ -1,7 +1,5 @@
-// 標準のfetchを使用（require('node-fetch')は不要です）
 exports.handler = async (event, context) => {
-    console.log("--- Function Started ---"); // ログ開始
-
+    // POST以外をブロック
     if (event.httpMethod !== "POST") {
         return { statusCode: 405, body: "Method Not Allowed" };
     }
@@ -11,14 +9,17 @@ exports.handler = async (event, context) => {
         const API_KEY = process.env.GEMINI_API_KEY;
 
         if (!API_KEY) {
-            console.error("Error: GEMINI_API_KEY is not set in Netlify!");
-            return { statusCode: 500, body: JSON.stringify({ error: "API Key missing" }) };
+            return { statusCode: 500, body: JSON.stringify({ error: "APIキーが設定されていません。" }) };
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        /**
+         * モデル名の選択について：
+         * 安定性を求めるなら: gemini-1.5-flash
+         * 最新の実験版を試すなら: gemini-2.0-flash-exp
+         */
+        const MODEL_NAME = "gemini-1.5-flash"; 
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
-        console.log("Sending request to Gemini...");
-        
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -28,19 +29,27 @@ exports.handler = async (event, context) => {
                         { text: prompt },
                         { inline_data: { mime_type: "image/jpeg", data: image } }
                     ]
-                }]
+                }],
+                // 判定を確実にするための設定（任意）
+                generationConfig: {
+                    temperature: 0.1, // 低めに設定することで回答を安定させる
+                    topP: 0.95,
+                    maxOutputTokens: 100,
+                }
             })
         });
 
         const data = await response.json();
-        
-        // Geminiからのエラーがある場合
+
+        // Geminiからのエラーレスポンスをチェック
         if (data.error) {
-            console.error("Gemini API Error:", data.error.message);
-            return { statusCode: 400, body: JSON.stringify({ error: data.error.message }) };
+            console.error("Gemini Error:", data.error.message);
+            return { 
+                statusCode: 400, 
+                body: JSON.stringify({ error: `Gemini API Error: ${data.error.message}` }) 
+            };
         }
 
-        console.log("Gemini Success!");
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
@@ -48,10 +57,10 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        console.error("Function Crash Error:", error.message);
+        console.error("Function Crash:", error.message);
         return { 
             statusCode: 500, 
-            body: JSON.stringify({ error: error.message }) 
+            body: JSON.stringify({ error: "サーバー内部でエラーが発生しました。" }) 
         };
     }
 };
