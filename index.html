@@ -5,84 +5,214 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Spot Explorer</title>
     <style>
-        /* 前回のスタイリッシュなCSSをそのまま使用 */
-        :root { --primary: #00f2fe; --bg: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
-        body { font-family: sans-serif; background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
-        #webcam-container { width: 300px; height: 300px; border-radius: 20px; overflow: hidden; background: #000; position: relative; border: 4px solid var(--primary); }
+        :root {
+            --primary: #00f2fe;
+            --accent: #4facfe;
+            --success: #00ff88;
+            --danger: #ff4b2b;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            background: var(--bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header { padding: 30px 0 10px; text-align: center; }
+        h1 {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        #status { font-size: 0.8rem; color: #94a3b8; margin-top: 5px; min-height: 1.2em; }
+
+        /* カメラエリア */
+        #webcam-outer {
+            position: relative;
+            margin: 20px auto;
+            width: 320px;
+            height: 320px;
+            border-radius: 30px;
+            padding: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.4);
+        }
+
+        #webcam-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 22px;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+        }
+
         video { width: 100%; height: 100%; object-fit: cover; }
-        .controls { margin-top: 20px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        button { padding: 16px 40px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; width: 80%; max-width: 300px; }
-        .btn-capture { background: linear-gradient(to right, #ff416c, #ff4b2b); color: white; }
-        .info-card { display: none; width: 85%; max-width: 400px; padding: 20px; background: var(--glass); border-radius: 20px; backdrop-filter: blur(10px); margin-top: 20px; }
-        #result-image { width: 100%; border-radius: 10px; margin: 10px 0; }
+        canvas { display: none; }
+
+        /* スキャン線 */
+        .scan-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            z-index: 10;
+            animation: scan 2s linear infinite;
+            display: none;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* コントロール */
+        .controls {
+            margin: 20px 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        button {
+            border: none; border-radius: 50px; padding: 16px 40px;
+            font-size: 1rem; font-weight: bold; color: white;
+            cursor: pointer; transition: 0.3s; width: 80%; max-width: 300px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        .btn-start { background: linear-gradient(to right, #6a11cb, #2575fc); }
+        .btn-capture { background: linear-gradient(to right, #ff416c, #ff4b2b); }
+        .btn-reset { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); }
+        button:active { transform: scale(0.95); }
+
+        /* 結果エリア */
+        .info-card {
+            display: none;
+            width: 85%; max-width: 400px;
+            margin: 10px auto 40px;
+            padding: 25px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .result-label { font-size: 1.4rem; font-weight: bold; color: var(--primary); margin-bottom: 10px; }
+        #result-image { width: 100%; border-radius: 15px; margin: 15px 0; border: 1px solid rgba(255, 255, 255, 0.2); }
+        #distance-tag {
+            display: inline-block; padding: 5px 12px; background: rgba(0, 255, 136, 0.2);
+            color: var(--success); border-radius: 50px; font-size: 0.8rem; margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Spot Explorer AI</h1>
-    <div id="status">システムを起動してください</div>
+    <header>
+        <h1>Spot Explorer AI</h1>
+        <div id="status">システムを起動してください</div>
+    </header>
     
-    <div id="webcam-container">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="canvas" style="display:none;"></canvas>
-    </div>
-
-    <div class="controls">
-        <button id="start-btn" onclick="initSystem()" style="background: #007bff; color: white;">カメラとGPSを起動</button>
-        <button id="capture-btn" class="btn-capture" style="display:none;" onclick="analyze()">📸 AI判定を実行</button>
-        <button id="reset-btn" onclick="location.reload()" style="display:none; background: #444; color: white;">もう一度</button>
+    <div id="webcam-outer">
+        <div id="webcam-container">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <div id="scan-line" class="scan-line"></div>
+        </div>
     </div>
 
     <div id="info-area" class="info-card">
-        <h2 id="result-title"></h2>
+        <div id="result-label" class="result-label"></div>
         <img id="result-image" style="display: none;">
-        <p id="result-desc"></p>
-        <div id="distance-info" style="color: #00ff88; font-weight: bold;"></div>
+        <div id="info-desc" style="line-height: 1.6; color: #cbd5e1;"></div>
+        <div id="distance-tag"></div>
+    </div>
+
+    <div class="controls">
+        <button id="start-btn" class="btn-start" onclick="initSystem()">START SYSTEM</button>
+        <button id="capture-btn" class="btn-capture" style="display: none;" onclick="analyze()">📸 ANALYSIS (判定)</button>
+        <button id="reset-btn" class="btn-reset" style="display: none;" onclick="location.reload()">RETRY (再開)</button>
     </div>
 
     <script>
+        // 設定データ
         const TARGETS = {
             "Nintendo": { 
                 lat: 35.6586, lon: 139.7454, 
-                title: "任天堂スポット", 
-                desc: "特別な任天堂情報を表示中！",
+                title: "Nintendo Station", 
+                desc: "特別な任天堂スポットを検知。限定情報を表示します。",
                 image: "nintendo.jpg" 
             },
             "セブンイレブン": { 
                 lat: 35.6812, lon: 139.7671, 
-                title: "セブンイレブン", 
-                desc: "近隣店舗のクーポンが利用可能です。",
+                title: "7-Eleven Point", 
+                desc: "セブンイレブンを認識。クーポンが利用可能です。",
                 image: "711.jpg"
             }
         };
 
         let userLat, userLon;
 
+        // 1. システム起動
         async function initSystem() {
+            const status = document.getElementById("status");
+            status.innerText = "GPSを取得中...";
+
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 userLat = pos.coords.latitude;
                 userLon = pos.coords.longitude;
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                document.getElementById("video").srcObject = stream;
-                document.getElementById("start-btn").style.display = "none";
-                document.getElementById("capture-btn").style.display = "block";
-                document.getElementById("status").innerText = "判定対象を映してボタンを押してください";
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    document.getElementById("video").srcObject = stream;
+                    
+                    document.getElementById("start-btn").style.display = "none";
+                    document.getElementById("capture-btn").style.display = "block";
+                    document.getElementById("scan-line").style.display = "block";
+                    status.innerText = "対象を映して判定ボタンを押してください";
+                } catch (e) {
+                    status.innerText = "カメラの起動に失敗しました。";
+                }
+            }, (err) => {
+                status.innerText = "位置情報を許可してください。";
             });
         }
 
+        // 2. 判定処理（Gemini API呼び出し）
         async function analyze() {
-            document.getElementById("status").innerText = "AI解析中...";
+            const video = document.getElementById("video");
+            const status = document.getElementById("status");
+            const scanLine = document.getElementById("scan-line");
+
+            // 画像をフリーズさせる
+            video.pause();
+            scanLine.style.display = "none";
+            status.innerText = "AI解析中（サーバー通信中）...";
             document.getElementById("capture-btn").style.display = "none";
 
-            const video = document.getElementById("video");
+            // 画像の軽量化（リサイズ）
             const canvas = document.getElementById("canvas");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext("2d").drawImage(video, 0, 0);
-            const base64Image = canvas.toDataURL("image/jpeg").split(",")[1];
+            const scale = Math.min(1, 800 / video.videoWidth); 
+            canvas.width = video.videoWidth * scale;
+            canvas.height = video.videoHeight * scale;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Base64化 (JPEG 70%品質)
+            const base64Image = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
 
             try {
-                // Netlifyのサーバーレス関数を呼び出す
+                // Netlify Functionsを呼び出し
                 const response = await fetch('/.netlify/functions/analyze', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -92,6 +222,8 @@
                 });
 
                 const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Server Error");
+
                 const resultText = data.candidates[0].content.parts[0].text.trim();
 
                 if (resultText !== "None" && TARGETS[resultText]) {
@@ -100,31 +232,40 @@
 
                     if (dist <= 50) {
                         showResult(target, dist);
-                        document.getElementById("status").innerText = "成功！情報を表示します。";
+                        status.innerText = "判定成功！";
                     } else {
-                        document.getElementById("status").innerText = `対象は ${resultText} ですが、${Math.round(dist)}m離れています。`;
+                        status.innerText = "対象は合っていますが、場所が遠すぎます。";
+                        showResult({title: resultText, desc: "もっと近くで撮影してください。"}, dist, false);
                     }
                 } else {
-                    document.getElementById("status").innerText = "対象が見つかりませんでした。";
+                    status.innerText = "対象が見つかりませんでした。";
                 }
-                document.getElementById("reset-btn").style.display = "block";
             } catch (e) {
-                document.getElementById("status").innerText = "通信エラーが発生しました。";
+                console.error(e);
+                status.innerText = "エラー: " + e.message;
             }
+            document.getElementById("reset-btn").style.display = "block";
         }
 
-        function showResult(target, dist) {
-            document.getElementById("info-area").style.display = "block";
-            document.getElementById("result-title").innerText = target.title;
-            document.getElementById("result-desc").innerText = target.desc;
-            document.getElementById("distance-info").innerText = `📍 距離: ${Math.round(dist)}m`;
-            if (target.image) {
-                const img = document.getElementById("result-image");
+        // 3. 結果表示
+        function showResult(target, dist, success = true) {
+            const area = document.getElementById("info-area");
+            const img = document.getElementById("result-image");
+            area.style.display = "block";
+            document.getElementById("result-label").innerText = target.title;
+            document.getElementById("info-desc").innerText = target.desc;
+            document.getElementById("distance-tag").innerText = `📍 DISTANCE: ${Math.round(dist)}m`;
+            
+            if (success && target.image) {
                 img.src = target.image;
                 img.style.display = "block";
+            } else {
+                img.style.display = "none";
             }
+            area.scrollIntoView({ behavior: 'smooth' });
         }
 
+        // 4. 距離計算（ハバサイン）
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
