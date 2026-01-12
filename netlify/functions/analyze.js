@@ -1,5 +1,4 @@
 exports.handler = async (event, context) => {
-    // POST以外をブロック
     if (event.httpMethod !== "POST") {
         return { statusCode: 405, body: "Method Not Allowed" };
     }
@@ -9,16 +8,15 @@ exports.handler = async (event, context) => {
         const API_KEY = process.env.GEMINI_API_KEY;
 
         if (!API_KEY) {
-            return { statusCode: 500, body: JSON.stringify({ error: "APIキーが設定されていません。" }) };
+            return { 
+                statusCode: 500, 
+                body: JSON.stringify({ error: "Netlifyの環境変数にAPIキーが設定されていません。" }) 
+            };
         }
 
-        /**
-         * モデル名の選択について：
-         * 安定性を求めるなら: gemini-1.5-flash
-         * 最新の実験版を試すなら: gemini-2.0-flash-exp
-         */
-        const MODEL_NAME = "gemini-1.5-flash"; 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+        // 安定版の v1 エンドポイントを使用
+        const MODEL = "gemini-1.5-flash"; 
+        const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${API_KEY}`;
 
         const response = await fetch(url, {
             method: 'POST',
@@ -30,23 +28,21 @@ exports.handler = async (event, context) => {
                         { inline_data: { mime_type: "image/jpeg", data: image } }
                     ]
                 }],
-                // 判定を確実にするための設定（任意）
                 generationConfig: {
-                    temperature: 0.1, // 低めに設定することで回答を安定させる
-                    topP: 0.95,
-                    maxOutputTokens: 100,
+                    temperature: 0.1,
+                    maxOutputTokens: 100
                 }
             })
         });
 
         const data = await response.json();
 
-        // Geminiからのエラーレスポンスをチェック
+        // Google API側からエラーが返ってきた場合
         if (data.error) {
-            console.error("Gemini Error:", data.error.message);
+            console.error("Gemini API Error Detail:", data.error);
             return { 
                 statusCode: 400, 
-                body: JSON.stringify({ error: `Gemini API Error: ${data.error.message}` }) 
+                body: JSON.stringify({ error: `Google APIエラー: ${data.error.message}` }) 
             };
         }
 
@@ -57,10 +53,10 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        console.error("Function Crash:", error.message);
+        console.error("Internal Server Error:", error.message);
         return { 
             statusCode: 500, 
-            body: JSON.stringify({ error: "サーバー内部でエラーが発生しました。" }) 
+            body: JSON.stringify({ error: "サーバー側で予期せぬエラーが発生しました。" }) 
         };
     }
 };
