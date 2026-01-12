@@ -14,8 +14,10 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // 安定版の v1 エンドポイントを使用
-        const MODEL = "gemini-1.5-flash"; 
+        // 画像のバージョン（Gemini 3 Flash）に合わせてモデル名を変更
+        const MODEL = "gemini-3-flash"; 
+        
+        // 最新モデルを使用するため、エンドポイントを確認（必要に応じて v1beta に変更）
         const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${API_KEY}`;
 
         const response = await fetch(url, {
@@ -37,7 +39,6 @@ exports.handler = async (event, context) => {
 
         const data = await response.json();
 
-        // Google API側からエラーが返ってきた場合
         if (data.error) {
             console.error("Gemini API Error Detail:", data.error);
             return { 
