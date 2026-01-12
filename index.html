@@ -11,16 +11,25 @@
         #webcam-container { width: 100%; height: 100%; border-radius: 22px; overflow: hidden; background: #000; position: relative; }
         video { width: 100%; height: 100%; object-fit: cover; }
         canvas { display: none; }
+        
+        /* 待機中のアニメーション用 */
+        .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5, end) infinite; }
+        @keyframes dots { 0%, 20% { content: ' .'; } 40% { content: ' ..'; } 60% { content: ' ...'; } 80%, 100% { content: ''; } }
+
         .controls { margin: 20px 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        button { border: none; border-radius: 50px; padding: 16px 40px; font-size: 1rem; font-weight: bold; color: white; cursor: pointer; width: 80%; max-width: 300px; }
+        button { border: none; border-radius: 50px; padding: 16px 40px; font-size: 1rem; font-weight: bold; color: white; cursor: pointer; width: 80%; max-width: 300px; transition: 0.3s; }
         .btn-capture { background: linear-gradient(to right, #ff416c, #ff4b2b); }
-        .info-card { display: none; width: 85%; max-width: 400px; padding: 25px; background: var(--glass); backdrop-filter: blur(15px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 40px; }
+        .info-card { display: none; width: 85%; max-width: 400px; padding: 25px; background: var(--glass); backdrop-filter: blur(15px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.2); margin-bottom: 40px; }
+        
+        /* 解析結果の強調 */
+        .ai-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+        .result-title { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
     </style>
 </head>
 <body>
 
     <h1>Spot Explorer Gemini</h1>
-    <div id="status">システムを起動してください</div>
+    <div id="status">システムを待機中</div>
     
     <div id="webcam-outer">
         <div id="webcam-container">
@@ -30,43 +39,64 @@
     </div>
 
     <div id="info-area" class="info-card">
-        <div id="result-label" style="font-size: 1.4rem; font-weight: bold; color: var(--primary);"></div>
+        <div class="ai-label">AI Analysis Result</div>
+        <div id="result-label" class="result-title"></div>
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
         <p id="result-desc" style="line-height: 1.6; color: #cbd5e1;"></p>
-        <div id="distance-tag" style="color: #00ff88; font-weight: bold;"></div>
+        <div id="distance-tag" style="color: #00ff88; font-weight: bold; margin-top: 10px;"></div>
     </div>
 
     <div class="controls">
-        <button id="start-btn" style="background: #007bff;" onclick="initSystem()">START</button>
+        <button id="start-btn" style="background: #007bff;" onclick="initSystem()">START SYSTEM</button>
         <button id="capture-btn" class="btn-capture" style="display: none;" onclick="analyze()">📸 ANALYSIS</button>
-        <button id="reset-btn" style="display: none; background: #444;" onclick="location.reload()">RETRY</button>
+        <button id="reset-btn" style="display: none; background: #444;" onclick="location.reload()">RETRY (再開)</button>
     </div>
 
     <script>
         const TARGETS = {
-            "Nintendo": { lat: 35.6586, lon: 139.7454, title: "任天堂スポット", desc: "AIが任天堂を認識しました！" },
-            "セブンイレブン": { lat: 35.6812, lon: 139.7671, title: "セブンイレブン", desc: "AIがセブンイレブンを認識しました！" }
+            "Nintendo": { lat: 35.6586, lon: 139.7454, info: "任天堂スポット周辺です。特別な体験が可能です。" },
+            "セブンイレブン": { lat: 35.6812, lon: 139.7671, info: "セブンイレブンを認識。限定クーポンが使えます。" }
         };
 
         let userLat, userLon;
 
+        // 1. システム起動（待ち時間の表示を強化）
         async function initSystem() {
+            const btn = document.getElementById("start-btn");
+            const status = document.getElementById("status");
+            
+            btn.disabled = true;
+            btn.innerText = "Initializing...";
+            status.innerHTML = '<span class="loading-dots">GPSとカメラを起動中</span>';
+
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 userLat = pos.coords.latitude;
                 userLon = pos.coords.longitude;
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                document.getElementById("video").srcObject = stream;
-                document.getElementById("start-btn").style.display = "none";
-                document.getElementById("capture-btn").style.display = "block";
-                document.getElementById("status").innerText = "判定対象を映してください";
+                
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    document.getElementById("video").srcObject = stream;
+                    
+                    btn.style.display = "none";
+                    document.getElementById("capture-btn").style.display = "block";
+                    status.innerText = "準備完了。判定したいものを映してください。";
+                } catch (e) {
+                    status.innerText = "カメラの起動に失敗しました。";
+                }
+            }, (err) => {
+                status.innerText = "位置情報を許可して再読み込みしてください。";
             });
         }
 
+        // 2. 判定処理（何が写っているかを出力）
         async function analyze() {
             const video = document.getElementById("video");
             const status = document.getElementById("status");
             video.pause();
-            status.innerText = "AI解析中...";
             
+            status.innerHTML = '<span class="loading-dots">AI通信中</span>';
+            document.getElementById("capture-btn").style.display = "none";
+
             const canvas = document.getElementById("canvas");
             const scale = Math.min(1, 800 / video.videoWidth);
             canvas.width = video.videoWidth * scale;
@@ -79,38 +109,55 @@
                     method: 'POST',
                     body: JSON.stringify({
                         image: base64Image,
-                        prompt: "画像にNintendoかセブンイレブンの看板があればその名前のみ、なければNoneと答えて。"
+                        // プロンプトを調整：何が写っているか答えさせる
+                        prompt: "画像に何が写っているか日本語10文字程度で簡潔に答えて。もしNintendoのロゴかセブンイレブンの看板があれば、必ず『Nintendo』または『セブンイレブン』という単語を含めてください。"
                     })
                 });
 
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || "Server Error");
 
-                const resultText = data.candidates[0].content.parts[0].text.trim();
-                if (resultText !== "None" && TARGETS[resultText]) {
-                    const target = TARGETS[resultText];
-                    const dist = calculateDistance(userLat, userLon, target.lat, target.lon);
-                    if (dist <= 50) {
-                        showResult(target, dist);
-                        status.innerText = "成功！";
-                    } else {
-                        status.innerText = "場所が遠すぎます。";
-                    }
-                } else {
-                    status.innerText = "見つかりませんでした。";
-                }
+                const aiResponse = data.candidates[0].content.parts[0].text.trim();
+                showResult(aiResponse);
+                status.innerText = "解析完了";
+
             } catch (e) {
                 status.innerText = "エラー: " + e.message;
             }
-            document.getElementById("capture-btn").style.display = "none";
             document.getElementById("reset-btn").style.display = "block";
         }
 
-        function showResult(target, dist) {
-            document.getElementById("info-area").style.display = "block";
-            document.getElementById("result-label").innerText = target.title;
-            document.getElementById("result-desc").innerText = target.desc;
-            document.getElementById("distance-tag").innerText = `📍 距離: ${Math.round(dist)}m`;
+        // 3. 結果表示のロジック
+        function showResult(aiText) {
+            const area = document.getElementById("info-area");
+            const label = document.getElementById("result-label");
+            const desc = document.getElementById("result-desc");
+            const distTag = document.getElementById("distance-tag");
+
+            area.style.display = "block";
+            label.innerText = aiText; // AIが答えた内容をそのままタイトルに
+
+            // 特定のキーワードが含まれているかチェック
+            let foundKey = Object.keys(TARGETS).find(key => aiText.includes(key));
+
+            if (foundKey) {
+                const target = TARGETS[foundKey];
+                const dist = calculateDistance(userLat, userLon, target.lat, target.lon);
+                
+                desc.innerText = target.info;
+                distTag.innerText = `📍 現在地からの距離: ${Math.round(dist)}m`;
+                
+                if (dist > 50) {
+                    distTag.style.color = "#ff4b2b";
+                    distTag.innerText += " (範囲外です)";
+                } else {
+                    distTag.style.color = "#00ff88";
+                    distTag.innerText += " (チェックイン成功！)";
+                }
+            } else {
+                desc.innerText = "スポットリストには登録されていません。";
+                distTag.innerText = "";
+            }
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
