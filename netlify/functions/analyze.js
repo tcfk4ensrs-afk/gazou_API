@@ -11,17 +11,11 @@ exports.handler = async (event, context) => {
             return { statusCode: 500, body: JSON.stringify({ error: "APIキーが設定されていません。" }) };
         }
 
-        /**
-         * 使用するモデルを選択してください：
-         * 1. "gemini-3-flash" (1K RPM / 10K RPD)
-         * 2. "gemini-2.0-flash" (2K RPM / 無制限 RPD)
-         */
-        const MODEL = "gemini-3-flash"; 
-        
-        // プレビューや最新モデルは v1beta エンドポイントが最も確実です
+        // 修正ポイント：表で「無制限」かつ「安定」している 2.0 Flash を使用
+        const MODEL = "gemini-2.0-flash"; 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
-        console.log(`Executing request with Model: ${MODEL}`);
+        console.log(`Executing request with stable model: ${MODEL}`);
 
         const response = await fetch(url, {
             method: 'POST',
@@ -43,6 +37,7 @@ exports.handler = async (event, context) => {
         const data = await response.json();
 
         if (data.error) {
+            // エラーがある場合、その詳細をログと画面に出す
             console.error("Gemini Error:", data.error.message);
             return { 
                 statusCode: 400, 
