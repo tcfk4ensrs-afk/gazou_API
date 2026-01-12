@@ -1,4 +1,7 @@
 exports.handler = async (event, context) => {
+    // ログに実行バージョンを出力（デバッグ用）
+    console.log("--- Executing analyze.js [Version 1.0 Stable] ---");
+
     if (event.httpMethod !== "POST") {
         return { statusCode: 405, body: "Method Not Allowed" };
     }
@@ -11,7 +14,7 @@ exports.handler = async (event, context) => {
             return { statusCode: 500, body: JSON.stringify({ error: "APIキーが設定されていません。" }) };
         }
 
-        // 最も安定している v1 エンドポイントを使用
+        // 修正：v1betaではなく「v1」を使い、モデル名を正確に指定
         const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
         const response = await fetch(url, {
@@ -23,18 +26,19 @@ exports.handler = async (event, context) => {
                         { text: prompt },
                         { inline_data: { mime_type: "image/jpeg", data: image } }
                     ]
-                }],
-                generationConfig: {
-                    temperature: 0.1, // 回答を安定させる
-                    maxOutputTokens: 100
-                }
+                }]
             })
         });
 
         const data = await response.json();
 
         if (data.error) {
-            return { statusCode: 400, body: JSON.stringify({ error: data.error.message }) };
+            console.error("Gemini Error:", data.error.message);
+            // エラー文にバージョン情報を付与して返す
+            return { 
+                statusCode: 400, 
+                body: JSON.stringify({ error: `[v1] ${data.error.message}` }) 
+            };
         }
 
         return {
@@ -44,6 +48,6 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        return { statusCode: 500, body: JSON.stringify({ error: "通信エラーが発生しました。" }) };
+        return { statusCode: 500, body: JSON.stringify({ error: "通信に失敗しました。" }) };
     }
 };
