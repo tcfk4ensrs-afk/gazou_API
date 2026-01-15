@@ -34,6 +34,7 @@
         
         button { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
         .btn-target { background: #1e293b; color: white; border: 1px solid #4facfe; font-size: 0.8rem; padding: 10px; margin-bottom: 5px; border-radius: 8px; width: 100%; }
+        .btn-target:active { background: #4facfe; color: black; }
     </style>
 </head>
 <body>
@@ -67,7 +68,7 @@
     </div>
 
     <div id="bingo-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1500; flex-direction:column; justify-content:center; align-items:center; pointer-events:none;">
-        <div style="font-size:4rem; font-weight:bold; color:gold; animation:bounce 1s infinite;">BINGO!</div>
+        <div style="font-size:4rem; font-weight:bold; color:gold;">BINGO!</div>
     </div>
 
     <div id="modal">
@@ -82,7 +83,7 @@
                 <input type="text" id="answer-input" style="width:100%; padding:12px; border-radius:8px; background:#1e293b; color:white; border:1px solid #475569; box-sizing:border-box;" placeholder="答えを入力">
                 <button id="check-ans-btn" style="background:#fbbf24; color:black; width:100%;" onclick="verifyAnswer()">正解判定する</button>
                 <div id="target-selection-area" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px;">
-                    <label style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">空けるマスを選んでください：</label>
+                    <label id="selection-label" style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">空けるマスを選択してください：</label>
                     <div id="target-list"></div>
                 </div>
             </div>
@@ -110,10 +111,10 @@
             { id: 15, color: 'blue', target: "コカコーラ", riddle: "サンタを赤くした会社は？", answer: "コカコーラ", trueAnswer: "コーク", identified: false, solved: false, riddleCleared: false, clearsId: 9 }
         ];
 
-        let MASTER = []; let route = 'none'; let items = 10; let lines = []; let current = null; let itemMode = false; let finaleSeen = false;
+        let MASTER = []; let route = 'none'; let items = 0; let lines = []; let current = null; let itemMode = false; let finaleSeen = false;
 
         function load() {
-            const saved = localStorage.getItem('bingo_grand_v7_save');
+            const saved = localStorage.getItem('bingo_grand_v8_save');
             if(saved) {
                 const d = JSON.parse(saved); MASTER = d.m; route = d.r; items = d.i; lines = d.l; finaleSeen = d.f || false;
             } else { MASTER = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
@@ -122,7 +123,7 @@
         }
 
         function save() { 
-            localStorage.setItem('bingo_grand_v7_save', JSON.stringify({ m: MASTER, r: route, i: items, l: lines, f: finaleSeen })); 
+            localStorage.setItem('bingo_grand_v8_save', JSON.stringify({ m: MASTER, r: route, i: items, l: lines, f: finaleSeen })); 
             if(MASTER.every(c => c.solved) && !finaleSeen) showFinale();
         }
 
@@ -185,35 +186,78 @@
             } catch(e) { alert("AI Error"); }
         }
 
+        // 解答チェック
         function verifyAnswer() {
             const input = document.getElementById("answer-input").value.trim();
             const d = MASTER[current];
             const okN = (input === d.answer); const okT = (input === d.trueAnswer);
+            
+            // 確定ルートとの矛盾チェック
             if(route === 'self' && !okN) return alert("不正解");
             if(route === 'cross' && !okT) return alert("不正解");
             if(route === 'none' && !okN && !okT) return alert("不正解");
 
             document.getElementById("check-ans-btn").disabled = true;
             document.getElementById("target-selection-area").style.display = "block";
-            const list = document.getElementById("target-list"); list.innerHTML = "";
-            MASTER.forEach((m, idx) => {
-                if(!m.solved) {
-                    const isS = (idx === current); const isC = (idx === d.clearsId);
-                    if(route === 'none' || (route === 'self' && isS) || (route === 'cross' && isC)) {
-                        if((route === 'none' && ((isS && okN) || (isC && okT))) || (route !== 'none')) {
-                            const b = document.createElement("button"); b.className = "btn-target";
-                            b.innerText = `マス${idx+1}: ${m.target}` + (isS ? " (Self)" : "");
-                            b.onclick = () => finalize(idx); list.appendChild(b);
-                        }
-                    }
-                }
-            });
+            
+            // ★ここを変更：すべての「開放済み(identified)かつ未クリア(solved)」のマスを表示
+            renderTargetButtons(okN, okT);
         }
 
-        function finalize(targetIdx) {
-            if(route === 'none') route = (targetIdx === current) ? 'self' : 'cross';
-            if(!MASTER[targetIdx].identified) return alert("対象が未開放です");
-            MASTER[current].riddleCleared = true; MASTER[targetIdx].solved = true;
+        // すべての開放済みマスをリストに表示
+        function renderTargetButtons(okN, okT) {
+            const list = document.getElementById("target-list"); list.innerHTML = "";
+            const currentCell = MASTER[current];
+
+            MASTER.forEach((m, idx) => {
+                // すでに空いているマスは出さない
+                if(!m.solved && m.identified) {
+                    const btn = document.createElement("button");
+                    btn.className = "btn-target";
+                    btn.innerText = `マス${idx+1}: ${m.target}`;
+                    
+                    // クリック時の判定
+                    btn.onclick = () => finalize(idx, okN, okT);
+                    list.appendChild(btn);
+                }
+            });
+            
+            if(list.innerHTML === "") {
+                document.getElementById("selection-label").innerText = "開放されている空きマスがありません。";
+            } else {
+                document.getElementById("selection-label").innerText = "空ける対象のマスを選択してください：";
+            }
+        }
+
+        function finalize(targetIdx, okN, okT) {
+            const currentCell = MASTER[current];
+            const isSelfChoice = (targetIdx === current);
+            const isCrossChoice = (targetIdx === currentCell.clearsId);
+
+            // ルート確定後の矛盾チェック
+            if(route === 'self' && !isSelfChoice) return alert("対象マスではないです。");
+            if(route === 'cross' && !isCrossChoice) return alert("対象マスではないです。");
+            
+            // ルート未確定時の判定
+            if(route === 'none') {
+                if(isSelfChoice && okN) {
+                    route = 'self';
+                    alert("【ノーマルルート確定】");
+                } else if(isCrossChoice && okT) {
+                    route = 'cross';
+                    alert("【真エンドルート確定】");
+                } else {
+                    return alert("対象マスではないです。");
+                }
+            } else {
+                // ルート確定済みで、正しいマスを選んでいない場合
+                if(route === 'self' && !isSelfChoice) return alert("対象マスではないです。");
+                if(route === 'cross' && !isCrossChoice) return alert("対象マスではないです。");
+            }
+
+            alert("正解！マスが空きました。");
+            MASTER[current].riddleCleared = true;
+            MASTER[targetIdx].solved = true;
             save(); checkBingo(); closeModal(); render();
         }
 
@@ -246,15 +290,12 @@
         }
 
         function closeFinale() {
-            // ★ノーマルエンド時のみ、「全開放＆未クリア」状態へ移行
             if(route === 'self') {
                 MASTER.forEach(d => { d.identified = true; d.solved = false; d.riddleCleared = false; });
-                route = 'none'; // ルート選択をリセット
-                items = 0; lines = []; // アイテムやビンゴ進捗もクリア
-                finaleSeen = false; // 再びクリアすればエンディングが出るように
+                route = 'none'; items = 0; lines = []; finaleSeen = false;
                 alert("検討モード：全マスのスキャンが完了した状態でリスタートしました。");
             } else {
-                finaleSeen = true; // 真エンドなら完遂状態を維持
+                finaleSeen = true;
             }
             save();
             document.getElementById("clear-overlay").style.display = "none";
