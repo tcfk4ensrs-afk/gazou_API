@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BINGO MYSTERY AI - Chain Clear Edition</title>
+    <style>
+        :root { --bg: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
+        .col-red { --theme: #ff4d4d; } .col-blue { --theme: #4d94ff; } .col-green { --theme: #2ecc71; } .col-yellow { --theme: #f1c40f; }
+
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        
+        .setup-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #4facfe; box-sizing: border-box; }
+        .setup-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
+
+        .item-inventory { width: 95%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid gold; box-sizing: border-box; }
+        .item-btn { background: linear-gradient(135deg, gold, #f39c12); color: black; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+
+        .bingo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
+        .cell { 
+            aspect-ratio: 1/1; background: var(--glass); border: 2px solid var(--theme); border-radius: 10px; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            font-size: 0.6rem; font-weight: bold; text-align: center; cursor: pointer; padding: 5px; box-sizing: border-box; color: var(--theme);
+        }
+        /* 開放状態：枠が光る */
+        .cell.identified { background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 10px var(--theme); color: #fff; } 
+        /* 空いた状態：塗りつぶし */
+        .cell.complete { background: var(--theme); color: #000; border: none; box-shadow: 0 0 15px var(--theme); }
+        .ans-label { font-size: 0.5rem; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.2); width: 100%; padding-top: 2px; }
+
+        /* 全クリア画面 */
+        #game-clear-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #1e293b, #0f172a); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .clear-text { font-size: 3rem; font-weight: bold; color: gold; text-shadow: 0 0 20px white; margin-bottom: 20px; }
+
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .modal-content { max-width: 400px; margin: 0 auto; }
+        .input-group { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        #view-container { width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 12px; overflow: hidden; margin: 10px 0; border: 2px solid #334155; position: relative; }
+        video, canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        
+        button { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
+        .btn-solve { background: #fbbf24; color: #000; }
+        .select-box { width: 100%; padding: 12px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid #475569; margin-top: 10px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+    <h2 style="margin: 10px 0;">BINGO MYSTERY AI</h2>
+
+    <div class="setup-section">
+        <input type="password" id="test-api-key" placeholder="Gemini APIキーを入力">
+    </div>
+
+    <div class="item-inventory">
+        <div>
+            <span style="font-size: 0.7rem; color: gold; display: block;">ITEM: マスターキー(開放用)</span>
+            <span id="item-count" style="font-size: 1.2rem; font-weight: bold;">0</span>
+        </div>
+        <button id="use-item-btn" class="item-btn" onclick="toggleItemMode()">アイテムを使う</button>
+    </div>
+
+    <div class="bingo-grid" id="bingo-board"></div>
+
+    <div class="footer-area">
+        <button class="reset-btn" style="background:#444; color:#888; padding:8px; border-radius:5px;" onclick="resetGame()">進捗リセット</button>
+    </div>
+
+    <div id="game-clear-overlay">
+        <div class="clear-text">GAME CLEAR!</div>
+        <p style="color:white;">全てのマスが空きました！</p>
+        <button class="btn-solve" style="width:200px;" onclick="location.reload()">もう一度遊ぶ</button>
+    </div>
+
+    <div id="bingo-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; flex-direction:column; justify-content:center; align-items:center;">
+        <div style="font-size:5rem; font-weight:bold; color:gold;">BINGO!</div>
+    </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <h2 id="modal-title" style="color:#4facfe; margin:0 0 10px 0;">TARGET</h2>
+            
+            <div id="capture-section">
+                <div id="view-container">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+                <button class="btn-capture" style="background:#4facfe; color:white;" onclick="analyzeSpot()">📸 撮影して「開放」する</button>
+                <div id="ai-status" style="font-size:0.75rem; text-align:center; margin-top:8px; color:#94a3b8;">対象物を撮影してください</div>
+            </div>
+
+            <div id="riddle-section" style="display:none;" class="input-group">
+                <div style="color:#fbbf24; font-size:0.8rem; font-weight:bold;">MISSION: 謎を解いてマスを「空けろ」</div>
+                <p id="riddle-text" style="line-height: 1.6; margin: 10px 0;"></p>
+                <input type="text" id="answer-input" class="input-text" placeholder="答えを入力">
+                
+                <label style="display:block; margin-top:15px; font-size:0.8rem; color:white;">空ける対象マスを選択：</label>
+                <select id="target-selector" class="select-box"></select>
+
+                <button class="btn-solve" onclick="finalCheckChain()">答え合わせ ＆ 指定マスを空ける</button>
+            </div>
+            <button class="btn-close" style="background:#334155; color:white;" onclick="closeModal()">戻る</button>
+        </div>
+    </div>
+
+    <script>
+        // clearsId: このマスの謎を解くと「空く」マスのID
+        const DEFAULT_BINGO_DATA = [
+            { id: 0, target: "セブンイレブン", riddle: "「朝は4本、昼は2本、夜は3本」さて何？", answer: "人間", identified: false, solved: false, riddleCleared: false, clearsId: 1 },
+            { id: 1, target: "任天堂", riddle: "マリオの帽子のマークは？", answer: "M", identified: false, solved: false, riddleCleared: false, clearsId: 2 },
+            { id: 2, target: "ディズニー", riddle: "ミッキーの誕生日は11月何日？", answer: "18", identified: false, solved: false, riddleCleared: false, clearsId: 3 },
+            { id: 3, target: "ファミマ", riddle: "「あなたとコンビに」の続きは？", answer: "ファミリーマート", identified: false, solved: false, riddleCleared: false, clearsId: 4 },
+            { id: 4, target: "ローソン", riddle: "ロゴのミルク缶の色は？", answer: "白", identified: false, solved: false, riddleCleared: false, clearsId: 5 },
+            { id: 5, target: "マクドナルド", riddle: "ポテトMサイズの目安g数は？", answer: "135", identified: false, solved: false, riddleCleared: false, clearsId: 6 },
+            { id: 6, target: "郵便局", riddle: "郵便マーク（〒）の由来のカタカナは？", answer: "テ", identified: false, solved: false, riddleCleared: false, clearsId: 7 },
+            { id: 7, target: "スターバックス", riddle: "ロゴの人魚の名前は？", answer: "サイレン", identified: false, solved: false, riddleCleared: false, clearsId: 8 },
+            { id: 8, target: "ダイソー", riddle: "社名の由来は「大きく●●る」", answer: "創る", identified: false, solved: false, riddleCleared: false, clearsId: 9 },
+            { id: 9, target: "ユニクロ", riddle: "正式名称の最後は「●●●ハウス」", answer: "ウェア", identified: false, solved: false, riddleCleared: false, clearsId: 10 },
+            { id: 10, target: "くら寿司", riddle: "5皿で1回できるゲームは？", answer: "ビッくらポン", identified: false, solved: false, riddleCleared: false, clearsId: 11 },
+            { id: 11, target: "吉野家", riddle: "牛の角の間にあるものは？", answer: "ひょうたん", identified: false, solved: false, riddleCleared: false, clearsId: 12 },
+            { id: 12, target: "ニトリ", riddle: "お、ねだん●●●", answer: "以上", identified: false, solved: false, riddleCleared: false, clearsId: 13 },
+            { id: 13, target: "イオン", riddle: "旧社名は？", answer: "ジャスコ", identified: false, solved: false, riddleCleared: false, clearsId: 14 },
+            { id: 14, target: "ガスト", riddle: "看板の赤い鳥。名前はある？ない？", answer: "ない", identified: false, solved: false, riddleCleared: false, clearsId: 15 },
+            { id: 15, target: "コカコーラ", riddle: "サンタを赤色のイメージにした会社は？", answer: "コカコーラ", identified: false, solved: false, riddleCleared: false, clearsId: 0 }
+        ];
+
+        let BINGO_MASTER = [];
+        let itemsCount = 0;
+        let completedLines = [];
+        let itemMode = false;
+        let currentIdx = null;
+
+        function loadGame() {
+            const saved = localStorage.getItem('bingo_v3_save');
+            if(saved) {
+                const data = JSON.parse(saved);
+                BINGO_MASTER = data.master;
+                itemsCount = data.items || 0;
+                completedLines = data.lines || [];
+            } else {
+                BINGO_MASTER = JSON.parse(JSON.stringify(DEFAULT_BINGO_DATA));
+            }
+            renderBoard();
+            updateItemUI();
+        }
+
+        function saveGame() {
+            localStorage.setItem('bingo_v3_save', JSON.stringify({
+                master: BINGO_MASTER, items: itemsCount, lines: completedLines
+            }));
+            checkAllClear();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById("bingo-board");
+            board.innerHTML = "";
+            const colors = ['col-red', 'col-blue', 'col-green', 'col-yellow'];
+            BINGO_MASTER.forEach((d, i) => {
+                const cell = document.createElement("div");
+                cell.className = `cell ${colors[i % 4]}`;
+                if(d.identified) cell.classList.add("identified");
+                if(d.solved) cell.classList.add("complete");
+                
+                let content = `<span>${d.target}</span>`;
+                if(d.riddleCleared) content += `<div class="ans-label">答: ${d.answer}</div>`;
+                cell.innerHTML = content;
+                cell.onclick = () => handleCellClick(i);
+                board.appendChild(cell);
+            });
+        }
+
+        function handleCellClick(i) {
+            if (itemMode) useItemOnCell(i);
+            else openModal(i);
+        }
+
+        function updateItemUI() {
+            document.getElementById("item-count").innerText = itemsCount;
+            document.getElementById("use-item-btn").disabled = itemsCount <= 0;
+            document.getElementById("use-item-btn").innerText = itemMode ? "キャンセル" : "アイテムを使う";
+        }
+
+        function toggleItemMode() {
+            if (itemsCount <= 0) return;
+            itemMode = !itemMode;
+            updateItemUI();
+            if (itemMode) alert("「開放(スキャン)」をスキップするマスを選んでください。");
+        }
+
+        function useItemOnCell(i) {
+            const data = BINGO_MASTER[i];
+            if (data.identified || data.solved) return alert("すでに「開放」済みです。");
+            if (confirm(`${data.target} をスキャンなしで開放しますか？`)) {
+                itemsCount--; data.identified = true; itemMode = false;
+                saveGame(); updateItemUI(); renderBoard(); openModal(i);
+            }
+        }
+
+        async function openModal(i) {
+            currentIdx = i;
+            const data = BINGO_MASTER[i];
+            document.getElementById("modal-title").innerText = data.target;
+            document.getElementById("modal").style.display = "block";
+            
+            // セレクトボックスの生成
+            const sel = document.getElementById("target-selector");
+            sel.innerHTML = '<option value="">▼ 空けるマスを選択</option>';
+            BINGO_MASTER.forEach((m, idx) => {
+                if(!m.solved) {
+                    const opt = document.createElement("option");
+                    opt.value = idx;
+                    opt.innerText = `マス${idx+1}: ${m.target}`;
+                    sel.appendChild(opt);
+                }
+            });
+
+            if(data.identified) {
+                document.getElementById("capture-section").style.display = "none";
+                document.getElementById("riddle-section").style.display = "block";
+                document.getElementById("riddle-text").innerText = data.riddle;
+                document.getElementById("answer-input").value = data.riddleCleared ? data.answer : "";
+            } else {
+                document.getElementById("capture-section").style.display = "block";
+                document.getElementById("riddle-section").style.display = "none";
+                document.getElementById("video").style.display = "block";
+                document.getElementById("canvas").style.display = "none";
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    document.getElementById("video").srcObject = stream;
+                } catch (e) { alert("カメラ不可"); }
+            }
+        }
+
+        async function analyzeSpot() {
+            const apiKey = document.getElementById("test-api-key").value.trim();
+            if(!apiKey) return alert("APIキーを入力してください");
+            const video = document.getElementById("video");
+            const canvas = document.getElementById("canvas");
+            const data = BINGO_MASTER[currentIdx];
+
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+            video.style.display = "none"; canvas.style.display = "block";
+            document.getElementById("ai-status").innerText = "解析中...";
+
+            const imgBase64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [
+                        { text: `画像に「${data.target}」のロゴや建物があるか「はい」か「いいえ」で答えて。` },
+                        { inline_data: { mime_type: "image/jpeg", data: imgBase64 } }
+                    ] }] })
+                });
+                const res = await response.json();
+                if(res.candidates[0].content.parts[0].text.trim().includes("はい")) {
+                    alert("スキャン成功！「開放」されました。");
+                    data.identified = true; saveGame();
+                    document.getElementById("capture-section").style.display = "none";
+                    document.getElementById("riddle-section").style.display = "block";
+                    document.getElementById("riddle-text").innerText = data.riddle;
+                } else { alert("判定失敗"); video.style.display = "block"; canvas.style.display = "none"; }
+            } catch (e) { alert("Error: " + e.message); }
+        }
+
+        function finalCheckChain() {
+            const ansInput = document.getElementById("answer-input").value.trim();
+            const targetIdx = document.getElementById("target-selector").value;
+            const currentData = BINGO_MASTER[currentIdx];
+
+            if(ansInput !== currentData.answer) return alert("答えが違います。");
+            if(targetIdx === "") return alert("空ける対象のマスを選択してください。");
+
+            // 連鎖チェック：正しいマスを選択しているか
+            if(parseInt(targetIdx) !== currentData.clearsId) {
+                return alert("対象マスではないです。(この謎は別の場所を空けるためのものです)");
+            }
+
+            // 開放チェック：対象マスが開放されているか
+            const targetData = BINGO_MASTER[currentData.clearsId];
+            if(!targetData.identified) {
+                return alert(`${targetData.target} がまだ「開放」されていません。先にスキャンしてきてください。`);
+            }
+
+            alert(`正解！ ${targetData.target} が「空き」ました。`);
+            currentData.riddleCleared = true;
+            targetData.solved = true;
+            saveGame();
+            checkBingo();
+            closeModal();
+        }
+
+        function checkBingo() {
+            const winPatterns = [
+                [0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15], // 横
+                [0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15], // 縦
+                [0,5,10,15],[3,6,9,12] // 斜め
+            ];
+            let newBingo = false;
+            winPatterns.forEach((pattern, index) => {
+                if (pattern.every(idx => BINGO_MASTER[idx].solved) && !completedLines.includes(index)) {
+                    completedLines.push(index); itemsCount++; newBingo = true;
+                }
+            });
+            if (newBingo) {
+                const overlay = document.getElementById("bingo-overlay");
+                overlay.style.display = "flex";
+                setTimeout(() => overlay.style.display = "none", 3000);
+                saveGame(); updateItemUI();
+            }
+        }
+
+        function checkAllClear() {
+            if(BINGO_MASTER.every(d => d.solved)) {
+                document.getElementById("game-clear-overlay").style.display = "flex";
+            }
+        }
+
+        function closeModal() {
+            const v = document.getElementById("video");
+            if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+            document.getElementById("modal").style.display = "none";
+            renderBoard();
+        }
+
+        function resetGame() {
+            if(confirm("リセット？")) { localStorage.removeItem('bingo_v3_save'); location.reload(); }
+        }
+
+        loadGame();
+    </script>
+</body>
+</html>
