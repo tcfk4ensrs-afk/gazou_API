@@ -4,18 +4,25 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { image, prompt } = JSON.parse(event.body);
-        const API_KEY = process.env.GEMINI_API_KEY;
+        // apiKeyをリクエストボディから取り出す
+        const { image, prompt, apiKey } = JSON.parse(event.body);
+        
+        // 1. 画面から送られてきたキーを最優先
+        // 2. なければサーバーの環境変数を使用
+        const FINAL_API_KEY = apiKey || process.env.GEMINI_API_KEY;
 
-        if (!API_KEY) {
-            return { statusCode: 500, body: JSON.stringify({ error: "APIキーが設定されていません。" }) };
+        if (!FINAL_API_KEY) {
+            return { 
+                statusCode: 400, 
+                body: JSON.stringify({ error: "APIキーがありません。画面に入力するか、環境変数を設定してください。" }) 
+            };
         }
 
-        // 修正ポイント：表で「無制限」かつ「安定」している 2.0 Flash を使用
         const MODEL = "gemini-2.0-flash"; 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${FINAL_API_KEY}`;
 
-        console.log(`Executing request with stable model: ${MODEL}`);
+        // ログでどちらのキーを使っているか確認可能（デバッグ用）
+        console.log(`Using API Key from: ${apiKey ? 'Client Input' : 'Environment'}`);
 
         const response = await fetch(url, {
             method: 'POST',
@@ -37,11 +44,9 @@ exports.handler = async (event, context) => {
         const data = await response.json();
 
         if (data.error) {
-            // エラーがある場合、その詳細をログと画面に出す
-            console.error("Gemini Error:", data.error.message);
             return { 
                 statusCode: 400, 
-                body: JSON.stringify({ error: `[${MODEL}] ${data.error.message}` }) 
+                body: JSON.stringify({ error: `[Gemini Error] ${data.error.message}` }) 
             };
         }
 
