@@ -232,7 +232,7 @@
             const isSelf = (targetIdx === currentIdx);
             if(gameRoute === 'none') {
                 gameRoute = isSelf ? 'self' : 'cross';
-                alert(gameRoute === 'self' ? "【ノーマルルート確定】" : "【真エンドルート確定】");
+                alert(gameRoute === 'self' ? "" : "【真エンドルート確定】");
             }
             if(!BINGO_MASTER[targetIdx].identified) return alert("対象マスが開放されていません！");
             alert("正解！マスが空きました。");
