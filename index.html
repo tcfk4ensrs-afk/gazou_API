@@ -3,37 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Mystery AI</title>
+    <title>Bingo Mystery AI - Prototype</title>
     <style>
         :root { --primary: #00f2fe; --accent: #4facfe; --bg: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
-        .header { text-align: center; margin-bottom: 10px; }
-        .header h1 { margin: 10px 0 5px 0; font-size: 1.5rem; background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .setup-section { width: 100%; max-width: 400px; background: var(--glass); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--accent); box-sizing: border-box; }
+        .setup-section label { font-size: 0.75rem; color: var(--accent); display: block; margin-bottom: 5px; }
+        .setup-section input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
 
-        /* ビンゴグリッド */
-        .bingo-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            width: 100%;
-            max-width: 400px;
-        }
+        .bingo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 400px; }
         .cell {
-            aspect-ratio: 1/1;
-            background: var(--glass);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.65rem;
-            font-weight: bold;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-            position: relative;
-            padding: 5px;
+            aspect-ratio: 1/1; background: var(--glass); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px;
+            display: flex; justify-content: center; align-items: center; font-size: 0.6rem; font-weight: bold;
+            text-align: center; cursor: pointer; position: relative; padding: 5px; box-sizing: border-box;
+        }
+        /* 進捗バー：上が謎解き(金)、下が写真(緑) */
+        .cell::before { content: ''; position: absolute; top: 0; left: 0; height: 4px; width: 0; background: gold; transition: 0.3s; }
+        .cell::after { content: ''; position: absolute; bottom: 0; left: 0; height: 4px; width: 0; background: #00ff88; transition: 0.3s; }
+        .cell.solved-riddle::before { width: 100%; }
+        .cell.solved-photo::after { width: 100%; }
+        .cell.complete { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #000; border: none; }
+
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .modal-content { max-width: 400px; margin: 0 auto; }
+        .input-group { background: var(--glass); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        #webcam-container { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        button { border: none; border-radius: 8px; padding: 12px; font-weight: bold; cursor: pointer; width: 100%; margin: 5px 0; }
+        .btn-action { background: var(--primary); color: #000; }
+        .btn-close { background: #334155; color: #fff; margin-top: 20px; }
+        .answer-input { width: 100%; padding: 10px; border-radius: 5px; border: none; margin: 10px 0; display: block; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+    <h1>BINGO MYSTERY AI</h1>
+
+    <div class="setup-section">
+        <label>TEST MODE: Gemini API Key</label>
+        <input type="password" id="test-api-key" placeholder="APIキーを貼り付けてください">
+    </div>
+
+    <div class="bingo-grid" id="bingo-board"></div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <h2 id="modal-title" style="color:var(--primary); margin-top:0;">スポット</h2>
+            
+            <div class="input-group">
+                <div style="color:gold; font-size:0.8rem; font-weight:bold;">MISSION 1: 謎を解け</div>
+                <p id="riddle-text"></p>
+                <input type="text" id="answer-input" class="answer-input" placeholder="答えを入力">
+                <button class="btn-action" onclick="checkAnswer()">答え合わせ</button>
+            </div>
+
+            <div class="input-group">
+                <div style="color:#00ff88; font-size:0.8rem; font-weight:bold;">MISSION 2: 現地を撮れ</div>
+                <div id="webcam-container">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                </div>
+                <button id="capture-btn" class="btn-action" onclick="analyze()">📸 写真を撮ってAI判定</button>
+                <div id="ai-status" style="font-size:0.7rem; text-align:center; margin-top:5px; color:#94a3b8;">カメラを向けてください</div>
+            </div>
+
+            <button class="btn-close" onclick="closeModal()">閉じる</button>
+        </div>
+    </div>
+
+    <script>
+        // 16マス分のデータ定義
+        const BINGO_DATA = [
+            { id: 0, target: "セブンイレブン", riddle: "「朝は4本、昼は2本、夜は3本」さて、なんの生き物？", answer: "人間", solvedRiddle: false, solvedPhoto: false },
+            { id: 1, target: "任天堂", riddle: "赤い帽子を被った、配管工の兄弟といえば？", answer: "マリオ", solvedRiddle: false, solvedPhoto: false },
+            { id: 2, target: "ディズニー", riddle: "魔法のランプから出てくる、青い魔人の名前は？", answer: "ジーニー", solvedRiddle: false, solvedPhoto: false },
+            { id: 3, target: "丸亀製麺", riddle: "白い麺にだしをかけて食べる、日本を代表する麺料理は？", answer: "うどん", solvedRiddle: false, solvedPhoto: false }
+        ];
+        // 残り12マスをダミーで埋める
+        for(let i=4; i<16; i++) {
+            BINGO_DATA.push({ id: i, target: `スポット ${i+1}`, riddle: "答えは「あ」", answer: "あ", solvedRiddle: false, solvedPhoto: false });
+        }
+
+        let selectedId = null;
+
+        function renderBoard() {
+            const board = document.getElementById("bingo-board");
+            board.innerHTML = "";
+            BINGO_DATA.forEach(data => {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                if (data.solvedRiddle) cell.classList.add("solved-riddle");
+                if (data.solvedPhoto) cell.classList.add("solved-photo");
+                if (data.solvedRiddle && data.solvedPhoto) cell.classList.add("complete");
+                cell.innerHTML = `<span>${data.target}</span>`;
+                cell.onclick = () => openModal(data.id);
+                board.appendChild(cell);
+            });
+        }
+
+        async function openModal(id) {
+            selectedId = id;
+            const data = BINGO_DATA[id];
+            document.getElementById("modal-title").innerText = data.target;
+            document.getElementById("riddle-text").innerText = data.riddle;
+            document.getElementById("answer-input").value = "";
+            document.getElementById("modal").style.display = "block";
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                document.getElementById("video").srcObject = stream;
+            } catch (e) { alert("カメラ起動失敗"); }
+        }
+
+        function closeModal() {
+            const stream = document.getElementById("video").srcObject;
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            document.getElementById("modal").style.display = "none";
+            renderBoard();
+        }
+
+        function checkAnswer() {
+            const input = document.getElementById("answer-input").value.trim();
+            if (input === BINGO_DATA[selectedId].answer) {
+                alert("正解！謎が解けました。");
+                BINGO_DATA[selectedId].solvedRiddle = true;
+                renderBoard();
+            } else { alert("不正解です"); }
+        }
+
+        async function analyze() {
+            const video = document.getElementById("video");
+            const canvas = document.getElementById("canvas");
+            const status = document.getElementById("ai-status");
+            const apiKey = document.getElementById("test-api-key").value.trim();
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+            const base64Image = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+
+            status.innerText = "AI通信中...";
+
+            try {
+                const response = await fetch('/.netlify/functions/analyze', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        image: base64Image,
+                        prompt: `画像に「${BINGO_DATA[selectedId].target}」に関連するものが写っているか判定してください。結果は「はい」または「いいえ」のいずれか1単語のみで答えて。`,
+                        apiKey: apiKey // 画面から入力したキーを送る
+                    })
+                });
+                const resData = await response.json();
+                if (resData.error) throw new Error(resData.error);
+                
+                const aiText = resData.candidates[0].content.parts[0].text.trim();
+                if (aiText.includes("はい")) {
+                    alert("AIが確認しました！");
+                    BINGO_DATA[selectedId].solvedPhoto = true;
+                    renderBoard();
+                } else { alert("認識できませんでした。"); }
+            } catch (e) { alert("エラー: " + e.message); }
+            status.innerText = "判定終了";
+        }
+
+        renderBoard();
+    </script>
+</body>
+</html>
             box-sizing: border-box;
             overflow: hidden;
         }
