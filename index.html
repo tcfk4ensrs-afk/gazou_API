@@ -3,134 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BINGO MYSTERY AI - Flow Fixed</title>
+    <title>BINGO MYSTERY AI - Advanced</title>
     <style>
         :root { --primary: #00f2fe; --accent: #4facfe; --bg: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
-        .setup-section { width: 95%; max-width: 400px; background: var(--glass); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--accent); box-sizing: border-box; }
+        .setup-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--accent); }
         .setup-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
 
-        /* メイン操作エリア：まず撮影から始まる */
-        .capture-area { width: 95%; max-width: 400px; background: var(--glass); padding: 15px; border-radius: 15px; border: 1px solid var(--accent); margin-bottom: 20px; box-sizing: border-box; }
-        #webcam-container { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 10px; border: 2px solid #334155; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-
-        /* 謎解きエリア：認識成功後に表示 */
-        #riddle-area { display: none; width: 95%; max-width: 400px; background: rgba(251, 191, 36, 0.1); padding: 20px; border-radius: 15px; border: 2px solid #fbbf24; margin-bottom: 20px; box-sizing: border-box; animation: fadeIn 0.5s; }
-
         /* ビンゴグリッド */
-        .bingo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 400px; margin-top: 10px; }
-        .cell { aspect-ratio: 1/1; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 0.6rem; font-weight: bold; text-align: center; position: relative; padding: 5px; box-sizing: border-box; }
+        .bingo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
+        .cell { 
+            aspect-ratio: 1/1; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            font-size: 0.6rem; font-weight: bold; text-align: center; cursor: pointer; padding: 5px; box-sizing: border-box; 
+        }
+        .cell.identified { border: 2px solid #fbbf24; } /* 認識済み（謎解き可能） */
         .cell.complete { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #0f172a; border: none; box-shadow: 0 0 15px var(--primary); }
+        .ans-label { font-size: 0.5rem; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.2); width: 100%; padding-top: 2px; }
 
+        /* モーダル */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .modal-content { max-width: 400px; margin: 0 auto; }
+        .input-group { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* 撮影・フリーズエリア */
+        #view-container { width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 12px; overflow: hidden; margin: 10px 0; border: 2px solid #334155; position: relative; }
+        video, canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        
         button { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
         .btn-capture { background: var(--primary); color: #0f172a; }
         .btn-solve { background: #fbbf24; color: #000; }
-        .input-text, .select-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: white; box-sizing: border-box; margin-top: 10px; font-size: 1rem; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-close { background: #334155; color: white; margin-top: 10px; }
+        .input-text { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: white; box-sizing: border-box; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h2 style="margin: 10px 0;">BINGO MYSTERY AI</h2>
+    <h2 style="margin: 10px 0;">BINGO MYSTERY</h2>
 
     <div class="setup-section">
         <input type="password" id="test-api-key" placeholder="Gemini APIキーを入力">
     </div>
 
-    <div class="capture-area">
-        <div id="webcam-container">
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas" style="display:none;"></canvas>
-        </div>
-        <button class="btn-capture" onclick="analyzeSpot()">📸 スポットを認識する</button>
-        <div id="ai-status" style="font-size:0.75rem; text-align:center; margin-top:8px; color:#94a3b8;">まずは対象物を撮影してください</div>
-    </div>
-
-    <div id="riddle-area">
-        <h3 id="detected-name" style="color:#fbbf24; margin:0;">ターゲット発見！</h3>
-        <p id="riddle-text" style="margin: 15px 0;"></p>
-        <input type="text" id="answer-input" class="input-text" placeholder="謎の答えを入力">
-        
-        <label style="display:block; margin-top:15px; font-size:0.8rem;">適用するマスを選択：</label>
-        <select id="cell-selector" class="select-box">
-            </select>
-        
-        <button class="btn-solve" onclick="finalCheck()">正解判定 & マスを開ける</button>
-    </div>
-
     <div class="bingo-grid" id="bingo-board"></div>
 
+    <div id="modal">
+        <div class="modal-content">
+            <h2 id="modal-title" style="color:var(--primary); margin:0 0 10px 0;">TARGET</h2>
+            
+            <div id="capture-section">
+                <div id="view-container">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas"></canvas> </div>
+                <button id="capture-btn" class="btn-capture" onclick="analyzeSpot()">📸 撮影してスポット判定</button>
+                <div id="ai-status" style="font-size:0.75rem; text-align:center; margin-top:8px; color:#94a3b8;">対象物を撮影してください</div>
+            </div>
+
+            <div id="riddle-section" style="display:none;" class="input-group">
+                <div style="color:#fbbf24; font-size:0.8rem; font-weight:bold;">MISSION: 謎を解け</div>
+                <p id="riddle-text" style="line-height: 1.6; margin: 10px 0;"></p>
+                <input type="text" id="answer-input" class="input-text" placeholder="答えを入力">
+                <button class="btn-solve" onclick="finalCheck()">答え合わせ</button>
+            </div>
+
+            <button class="btn-close" onclick="closeModal()">戻る</button>
+        </div>
+    </div>
+
     <script>
-        // データ定義
         const BINGO_MASTER = [
-            { id: 0, target: "セブンイレブン", riddle: "「朝は4本、昼は2本、夜は3本」さて何の生き物？", answer: "人間" },
-            { id: 1, target: "ファミマ", riddle: "「あなたとコンビに」の続きは？", answer: "ファミリーマート" },
-            { id: 2, target: "ディズニー", riddle: "ミッキーの誕生日は11月何日？", answer: "18" },
-            { id: 3, target: "任天堂", riddle: "マリオの帽子のマークは？", answer: "M" },
-            { id: 4, target: "マクドナルド", riddle: "M字型の黄色いロゴのモデルとなったアルファベットは？", answer: "M" },
-            { id: 5, target: "ローソン", riddle: "ロゴに描かれているミルク缶の色は？", answer: "白" }
+            { id: 0, target: "セブンイレブン", riddle: "「朝は4本、昼は2本、夜は3本」さて何の生き物？", answer: "人間", identified: false, solved: false },
+            { id: 1, target: "任天堂", riddle: "マリオの帽子のマークは？", answer: "M", identified: false, solved: false },
+            { id: 2, target: "ディズニー", riddle: "ミッキーの誕生日は11月何日？", answer: "18", identified: false, solved: false },
+            { id: 3, target: "ファミマ", riddle: "「あなたとコンビに」の続きは？", answer: "ファミリーマート", identified: false, solved: false }
         ];
 
-        // 足りない分をダミーで補完
         for(let i=BINGO_MASTER.length; i<16; i++) {
-            BINGO_MASTER.push({ id: i, target: `スポット${i+1}`, riddle: "答えは「あ」", answer: "あ" });
+            BINGO_MASTER.push({ id: i, target: `スポット ${i+1}`, riddle: "答えは「あ」", answer: "あ", identified: false, solved: false });
         }
 
-        let solvedData = null; // 現在認識中のスポットデータ
-        let bingoState = new Array(16).fill(false); // 各マスのクリア状態
+        let currentIdx = null;
 
-        // ビンゴボードとセレクトボックスの描画
-        function renderUI() {
+        function renderBoard() {
             const board = document.getElementById("bingo-board");
-            const selector = document.getElementById("cell-selector");
             board.innerHTML = "";
-            selector.innerHTML = '<option value="">▼ マスを選択してください</option>';
-
-            BINGO_MASTER.forEach((d, index) => {
-                // ボード描画
+            BINGO_MASTER.forEach((d, i) => {
                 const cell = document.createElement("div");
-                cell.className = "cell" + (bingoState[index] ? " complete" : "");
-                cell.innerHTML = `<span>${d.target}</span>`;
-                board.appendChild(cell);
-
-                // セレクトボックス描画（未クリアのマスのみ）
-                if(!bingoState[index]) {
-                    const opt = document.createElement("option");
-                    opt.value = index;
-                    opt.innerText = `マス${index + 1}: ${d.target}`;
-                    selector.appendChild(opt);
+                cell.className = "cell";
+                if(d.identified) cell.classList.add("identified");
+                if(d.solved) cell.classList.add("complete");
+                
+                let content = `<span>${d.target}</span>`;
+                if(d.solved) {
+                    content += `<div class="ans-label">正解: ${d.answer}</div>`;
                 }
+                cell.innerHTML = content;
+                cell.onclick = () => openModal(i);
+                board.appendChild(cell);
             });
         }
 
-        // カメラ起動
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                document.getElementById("video").srcObject = stream;
-            } catch (e) { alert("カメラ起動失敗"); }
+        async function openModal(i) {
+            currentIdx = i;
+            const data = BINGO_MASTER[i];
+            document.getElementById("modal-title").innerText = data.target;
+            document.getElementById("modal").style.display = "block";
+            
+            const canvas = document.getElementById("canvas");
+            const video = document.getElementById("video");
+            const riddleSec = document.getElementById("riddle-section");
+            const captureBtn = document.getElementById("capture-btn");
+
+            if(data.identified) {
+                // すでに認識済みの場合は問題をすぐ見せる（カメラは止める）
+                video.style.display = "none";
+                canvas.style.display = "none"; // 以前のフリーズ画像はあえて隠してスッキリさせる
+                captureBtn.style.display = "none";
+                riddleSec.style.display = "block";
+                document.getElementById("riddle-text").innerText = data.riddle;
+                document.getElementById("ai-status").innerText = "認識済みスポットです";
+            } else {
+                // 未認識の場合はカメラ起動
+                video.style.display = "block";
+                canvas.style.display = "none";
+                captureBtn.style.display = "block";
+                riddleSec.style.display = "none";
+                document.getElementById("ai-status").innerText = "撮影してください";
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    video.srcObject = stream;
+                } catch (e) { alert("カメラ起動失敗"); }
+            }
         }
 
-        // ステップ1: 画像認識
+        function closeModal() {
+            const video = document.getElementById("video");
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(t => t.stop());
+                video.srcObject = null;
+            }
+            document.getElementById("modal").style.display = "none";
+            renderBoard();
+        }
+
         async function analyzeSpot() {
             const apiKey = document.getElementById("test-api-key").value.trim();
             if(!apiKey) { alert("APIキーを入力してください"); return; }
 
             const video = document.getElementById("video");
             const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
             const status = document.getElementById("ai-status");
+            const data = BINGO_MASTER[currentIdx];
 
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext("2d").drawImage(video, 0, 0);
+            // 1. 画像をキャンバスに描画してフリーズ
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            
+            // UIを切り替え（ビデオを隠してキャンバスを表示）
+            video.style.display = "none";
+            canvas.style.display = "block";
+            status.innerText = "AI解析中...";
+
             const imgBase64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
-
-            status.innerText = "AIがスポットを判定中...";
-
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            const targetNames = BINGO_MASTER.map(b => b.target).join(", ");
 
             try {
                 const response = await fetch(url, {
@@ -139,67 +177,42 @@
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: `画像に何が写っているか以下のリストから1つ選んで名称のみ答えて。リストにない場合は「不明」と答えて。リスト：[${targetNames}]` },
+                                { text: `画像に「${data.target}」に関連するものが写っているか判定してください。「はい」か「いいえ」で答えて。` },
                                 { inline_data: { mime_type: "image/jpeg", data: imgBase64 } }
                             ]
                         }]
                     })
                 });
                 const res = await response.json();
-                const aiResult = res.candidates[0].content.parts[0].text.trim();
+                const aiAnswer = res.candidates[0].content.parts[0].text.trim();
 
-                const matched = BINGO_MASTER.find(b => aiResult.includes(b.target));
-
-                if (matched) {
-                    solvedData = matched;
-                    document.getElementById("detected-name").innerText = `🎯 ターゲット：${matched.target}`;
-                    document.getElementById("riddle-text").innerText = matched.riddle;
-                    document.getElementById("riddle-area").style.display = "block";
-                    status.innerText = "認識成功！謎を解いてください。";
-                    window.scrollTo({ top: document.getElementById("riddle-area").offsetTop, behavior: 'smooth' });
+                if(aiAnswer.includes("はい")) {
+                    alert("認識成功！謎が出現しました。");
+                    data.identified = true;
+                    document.getElementById("capture-btn").style.display = "none";
+                    document.getElementById("riddle-section").style.display = "block";
+                    document.getElementById("riddle-text").innerText = data.riddle;
+                    status.innerText = "認識成功";
                 } else {
-                    alert("対象物が見つかりません。リストにあるものを映してください。");
+                    alert("認識できませんでした。撮り直してください。");
+                    video.style.display = "block"; // 失敗したらカメラに戻す
+                    canvas.style.display = "none";
                     status.innerText = "認識失敗";
                 }
-            } catch (e) { alert("エラー: " + e.message); status.innerText = "エラー発生"; }
+            } catch (e) { alert("Error: " + e.message); }
         }
 
-        // ステップ2: 謎解き正解判定 ＆ マス適用
         function finalCheck() {
-            const answer = document.getElementById("answer-input").value.trim();
-            const selectedIdx = document.getElementById("cell-selector").value;
-
-            if (!solvedData) return;
-            if (selectedIdx === "") { alert("適用するマスを選択してください。"); return; }
-
-            // 1. 謎の正解チェック
-            if (answer !== solvedData.answer) {
-                alert("謎解きの答えが違います！");
-                return;
-            }
-
-            // 2. 選択したマスが、今認識したターゲットと一致するかチェック
-            // ※「どのマスに当てはめるか」の戦略性を出すため、あえて厳密に判定
-            if (BINGO_MASTER[selectedIdx].target !== solvedData.target) {
-                alert(`この答えは「${BINGO_MASTER[selectedIdx].target}」のマスには適用できません！`);
-                return;
-            }
-
-            // すべてOKならクリア
-            alert(`正解！ ${solvedData.target} のマスが開きました！`);
-            bingoState[selectedIdx] = true;
-            
-            // リセットして描画
-            document.getElementById("riddle-area").style.display = "none";
-            document.getElementById("answer-input").value = "";
-            solvedData = null;
-            renderUI();
+            const val = document.getElementById("answer-input").value.trim();
+            const data = BINGO_MASTER[currentIdx];
+            if (val === data.answer) {
+                alert("正解！ビンゴカードが更新されました。");
+                data.solved = true;
+                closeModal();
+            } else { alert("答えが違います。"); }
         }
 
-        // 初期化
-        renderUI();
-        startCamera();
+        renderBoard();
     </script>
 </body>
 </html>
-
