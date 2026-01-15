@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BINGO MYSTERY AI</title>
+    <title>BINGO MYSTERY AI (GitHub Pages版)</title>
     <style>
         :root { --primary: #00f2fe; --accent: #4facfe; --bg: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
@@ -20,46 +20,40 @@
             display: flex; justify-content: center; align-items: center; font-size: 0.65rem; font-weight: bold;
             text-align: center; cursor: pointer; position: relative; padding: 5px; box-sizing: border-box; overflow: hidden;
         }
-        /* 進捗バー：上が謎(金)、下が写真(緑) */
-        .cell::before, .cell::after { content: ''; position: absolute; left: 0; height: 4px; width: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .cell::before { top: 0; background: #fbbf24; } /* 謎解き用 */
-        .cell::after { bottom: 0; background: #10b981; } /* 写真用 */
-        
+        .cell::before, .cell::after { content: ''; position: absolute; left: 0; height: 4px; width: 0; transition: 0.4s; }
+        .cell::before { top: 0; background: #fbbf24; }
+        .cell::after { bottom: 0; background: #10b981; }
         .cell.solved-riddle::before { width: 100%; }
         .cell.solved-photo::after { width: 100%; }
-        
-        /* クリア状態：両方達成で青く光る */
         .cell.complete { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #0f172a; border: none; box-shadow: 0 0 15px var(--primary); }
-        .cell.complete span { position: relative; z-index: 2; }
 
-        /* モーダル表示 */
+        /* モーダル */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .modal-content { max-width: 400px; margin: 0 auto; }
         .input-group { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
         #webcam-container { width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 12px; overflow: hidden; margin: 10px 0; border: 2px solid #334155; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        button { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; transition: 0.2s; }
+        button { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; }
         .btn-main { background: var(--primary); color: #0f172a; margin-top: 10px; }
-        .btn-main:active { transform: scale(0.98); opacity: 0.8; }
         .btn-close { background: #334155; color: white; margin-top: 20px; }
-        .input-text { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: white; box-sizing: border-box; margin-top: 10px; font-size: 1rem; }
+        .input-text { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: white; box-sizing: border-box; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h2 style="margin: 10px 0;">BINGO MYSTERY</h2>
+    <h2 style="margin: 10px 0;">BINGO MYSTERY AI</h2>
 
     <div class="setup-section">
         <label>Set Gemini API Key</label>
-        <input type="password" id="test-api-key" placeholder="ここにAPIキーを貼り付け">
+        <input type="password" id="test-api-key" placeholder="APIキーを入力してください">
     </div>
 
     <div class="bingo-grid" id="bingo-board"></div>
 
     <div id="modal">
         <div class="modal-content">
-            <h2 id="modal-title" style="color:var(--primary); margin:0 0 15px 0; font-size: 1.5rem;">TARGET</h2>
+            <h2 id="modal-title" style="color:var(--primary); margin:0 0 15px 0;">TARGET</h2>
             
             <div class="input-group">
                 <div style="color:#fbbf24; font-size:0.8rem; font-weight:bold;">MISSION 1: RIDDLE</div>
@@ -75,23 +69,21 @@
                     <canvas id="canvas" style="display:none;"></canvas>
                 </div>
                 <button id="capture-btn" class="btn-main" onclick="analyze()">📸 撮影して判定</button>
-                <div id="ai-status" style="font-size:0.75rem; text-align:center; margin-top:8px; color:#94a3b8;">対象物を映してください</div>
+                <div id="ai-status" style="font-size:0.75rem; text-align:center; margin-top:8px; color:#94a3b8;">対象を映してください</div>
             </div>
 
-            <button class="btn-close" onclick="closeModal()">ビンゴカードに戻る</button>
+            <button class="btn-close" onclick="closeModal()">閉じる</button>
         </div>
     </div>
 
     <script>
         const BINGO_DATA = [
             { id: 0, target: "セブンイレブン", riddle: "朝は4本、昼は2本、夜は3本の生き物は？", answer: "人間", solvedRiddle: false, solvedPhoto: false },
-            { id: 1, target: "ファミマ", riddle: "「あなたとコンビに」の続きは？", answer: "ファミリーマート", solvedRiddle: false, solvedPhoto: false },
+            { id: 1, target: "任天堂", riddle: "マリオの帽子のマークは？", answer: "M", solvedRiddle: false, solvedPhoto: false },
             { id: 2, target: "ディズニー", riddle: "ミッキーマウスの誕生日は11月何日？", answer: "18", solvedRiddle: false, solvedPhoto: false },
-            { id: 3, target: "丸亀製麺", riddle: "丸亀製麺で一番人気の定番うどんは？", answer: "かけうどん", solvedRiddle: false, solvedPhoto: false },
-            { id: 4, target: "任天堂", riddle: "マリオの帽子のマークは？", answer: "M", solvedRiddle: false, solvedPhoto: false }
+            { id: 3, target: "ファミマ", riddle: "ファミマの入店音、最後は「レ」の音。では最初の音は？", answer: "ファ", solvedRiddle: false, solvedPhoto: false }
         ];
 
-        // 16マスに足りない分を補完
         for(let i=BINGO_DATA.length; i<16; i++) {
             BINGO_DATA.push({ id: i, target: `スポット ${i+1}`, riddle: "答えは「あ」", answer: "あ", solvedRiddle: false, solvedPhoto: false });
         }
@@ -118,17 +110,11 @@
             const data = BINGO_DATA[id];
             document.getElementById("modal-title").innerText = data.target;
             document.getElementById("riddle-text").innerText = data.riddle;
-            document.getElementById("answer-input").value = "";
-            document.getElementById("ai-status").innerText = "カメラ起動中...";
             document.getElementById("modal").style.display = "block";
-            
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 document.getElementById("video").srcObject = stream;
-                document.getElementById("ai-status").innerText = "準備完了";
-            } catch (e) {
-                document.getElementById("ai-status").innerText = "カメラ不可";
-            }
+            } catch (e) { alert("カメラ起動不可"); }
         }
 
         function closeModal() {
@@ -139,53 +125,53 @@
         }
 
         function checkAnswer() {
-            const val = document.getElementById("answer-input").value.trim();
-            if (val === BINGO_DATA[currentId].answer) {
-                alert("正解！謎を突破しました！");
-                BINGO_DATA[currentId].solvedRiddle = true;
-                render();
-            } else {
-                alert("不正解です...");
-            }
+            if (document.getElementById("answer-input").value.trim() === BINGO_DATA[currentId].answer) {
+                alert("正解！"); BINGO_DATA[currentId].solvedRiddle = true; render();
+            } else { alert("残念！"); }
         }
 
+        // ★GitHub Pages用に直接 Gemini API を呼ぶように変更
         async function analyze() {
             const video = document.getElementById("video");
             const canvas = document.getElementById("canvas");
             const status = document.getElementById("ai-status");
             const apiKey = document.getElementById("test-api-key").value.trim();
 
+            if(!apiKey) { alert("APIキーを入力してください。"); return; }
+
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext("2d").drawImage(video, 0, 0);
             const imgBase64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
 
-            status.innerText = "AI解析中（通信しています）...";
+            status.innerText = "AI解析中...";
             
+            // 直接 Google API のエンドポイントを叩く
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
             try {
-                const response = await fetch('/.netlify/functions/analyze', {
+                const response = await fetch(url, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        image: imgBase64,
-                        prompt: `画像に「${BINGO_DATA[currentId].target}」に関連する看板や建物、商品が写っているか判定してください。返答は「はい」か「いいえ」のどちらか1文字のみにしてください。`,
-                        apiKey: apiKey
+                        contents: [{
+                            parts: [
+                                { text: `画像に「${BINGO_DATA[currentId].target}」に関連するものが写っているか判定してください。結果は「はい」または「いいえ」の1単語のみで答えて。` },
+                                { inline_data: { mime_type: "image/jpeg", data: imgBase64 } }
+                            ]
+                        }]
                     })
                 });
                 
                 const res = await response.json();
-                if(res.error) throw new Error(res.error);
+                if(res.error) throw new Error(res.error.message);
                 
                 const aiAnswer = res.candidates[0].content.parts[0].text.trim();
                 if(aiAnswer.includes("はい")) {
-                    alert("AIが対象を認識しました！クリア！");
-                    BINGO_DATA[currentId].solvedPhoto = true;
-                    render();
-                } else {
-                    alert("認識できませんでした。もっと近づけてみてください。");
-                }
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+                    alert("AIが確認しました！成功！");
+                    BINGO_DATA[currentId].solvedPhoto = true; render();
+                } else { alert("認識できませんでした。"); }
+            } catch (e) { alert("エラー: " + e.message); }
             status.innerText = "待機中";
         }
 
