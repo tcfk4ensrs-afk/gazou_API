@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BINGO MYSTERY AI - Ultimate Edition</title>
+    <title>BINGO MYSTERY AI - Ultimate Custom Edition</title>
     <style>
         :root { --bg: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
-        .col-red { --theme: #ff4d4d; } .col-blue { --theme: #4d94ff; } .col-green { --theme: #2ecc71; } .col-yellow { --theme: #f1c40f; }
+        /* 色のスタイル定義 */
+        .col-red { --theme: #ff4d4d; }
+        .col-blue { --theme: #4d94ff; }
+        .col-green { --theme: #2ecc71; }
+        .col-yellow { --theme: #f1c40f; }
 
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
-        /* 設定・アイテムエリア */
         .setup-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #4facfe; box-sizing: border-box; }
         .setup-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
 
@@ -18,7 +21,6 @@
         .item-btn { background: linear-gradient(135deg, gold, #f39c12); color: black; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
         .item-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* ビンゴグリッド */
         .bingo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
         .cell { 
             aspect-ratio: 1/1; background: var(--glass); border: 2px solid var(--theme); border-radius: 10px; 
@@ -29,15 +31,13 @@
         .cell.complete { background: var(--theme); color: #000; border: none; box-shadow: 0 0 15px var(--theme); }
         .ans-label { font-size: 0.5rem; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.2); width: 100%; padding-top: 2px; }
 
-        /* 演出オーバーレイ */
         #game-clear-overlay, #bingo-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
         #game-clear-overlay { background: #000; }
         #bingo-overlay { background: rgba(0,0,0,0.8); pointer-events: none; }
         .clear-title { font-size: 2.5rem; font-weight: bold; margin-bottom: 20px; }
-        .bingo-text { font-size: 4rem; font-weight: bold; color: gold; animation: bounce 1s infinite; }
+        .bingo-text { font-size: 4rem; font-weight: bold; color: gold; animation: bounce 1.1s infinite; }
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
-        /* モーダル */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .modal-content { max-width: 400px; margin: 0 auto; }
         .input-group { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
@@ -90,7 +90,7 @@
             </div>
             <div id="riddle-section" style="display:none;" class="input-group">
                 <p id="riddle-text" style="line-height: 1.6; margin: 10px 0;"></p>
-                <input type="text" id="answer-input" class="input-text" style="width:100%; padding:12px; border-radius:8px; background:#1e293b; color:white; border:1px solid #475569; box-sizing:border-box;" placeholder="答えを入力">
+                <input type="text" id="answer-input" style="width:100%; padding:12px; border-radius:8px; background:#1e293b; color:white; border:1px solid #475569; box-sizing:border-box;" placeholder="答えを入力">
                 <button id="check-ans-btn" class="btn-solve" onclick="verifyAnswer()">正解判定する</button>
                 <div id="target-selection-area" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px;">
                     <label style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">空けるマスを選んでください：</label>
@@ -102,31 +102,35 @@
     </div>
 
     <script>
-        // ★連鎖設定 (clearsId) をここで自由にカスタマイズしてください
+        /**
+         * ★カスタマイズエリア
+         * color: 'red', 'blue', 'green', 'yellow' から選べます
+         * clearsId: 連鎖ルートで空くマスのID
+         */
         const DEFAULT_BINGO_DATA = [
-            { id: 0, target: "セブンイレブン", riddle: "「朝は4本、昼は2本、夜は3本」さて何？", answer: "人間", identified: false, solved: false, riddleCleared: false, clearsId: 5 },
-            { id: 1, target: "任天堂", riddle: "マリオの帽子のマークは？", answer: "M", identified: false, solved: false, riddleCleared: false, clearsId: 0 },
-            { id: 2, target: "ディズニー", riddle: "ミッキーの誕生日は11月何日？", answer: "18", identified: false, solved: false, riddleCleared: false, clearsId: 10 },
-            { id: 3, target: "ファミマ", riddle: "「あなたとコンビに」の続きは？", answer: "ファミリーマート", identified: false, solved: false, riddleCleared: false, clearsId: 15 },
-            { id: 4, target: "ローソン", riddle: "ロゴのミルク缶の色は？", answer: "白", identified: false, solved: false, riddleCleared: false, clearsId: 1 },
-            { id: 5, target: "マクドナルド", riddle: "ポテトMの目安g数は？", answer: "135", identified: false, solved: false, riddleCleared: false, clearsId: 12 },
-            { id: 6, target: "郵便局", riddle: "郵便マークの由来は？", answer: "テ", identified: false, solved: false, riddleCleared: false, clearsId: 3 },
-            { id: 7, target: "スタバ", riddle: "人魚の名前は？", answer: "サイレン", identified: false, solved: false, riddleCleared: false, clearsId: 6 },
-            { id: 8, target: "ダイソー", riddle: "社名の由来は「大きく●●る」", answer: "創る", identified: false, solved: false, riddleCleared: false, clearsId: 2 },
-            { id: 9, target: "ユニクロ", riddle: "正式名称の最後は？", answer: "ウェア", identified: false, solved: false, riddleCleared: false, clearsId: 13 },
-            { id: 10, target: "くら寿司", riddle: "5皿でできるゲームは？", answer: "ビッくらポン", identified: false, solved: false, riddleCleared: false, clearsId: 4 },
-            { id: 11, target: "吉野家", riddle: "牛の角の間にあるものは？", answer: "ひょうたん", identified: false, solved: false, riddleCleared: false, clearsId: 14 },
-            { id: 12, target: "ニトリ", riddle: "お、ねだん●●●", answer: "以上", identified: false, solved: false, riddleCleared: false, clearsId: 7 },
-            { id: 13, target: "イオン", riddle: "旧社名は？", answer: "ジャスコ", identified: false, solved: false, riddleCleared: false, clearsId: 8 },
-            { id: 14, target: "ガスト", riddle: "赤い鳥に名前はある？", answer: "ない", identified: false, solved: false, riddleCleared: false, clearsId: 11 },
-            { id: 15, target: "コカコーラ", riddle: "サンタを赤くした会社は？", answer: "コカコーラ", identified: false, solved: false, riddleCleared: false, clearsId: 9 }
+            { id: 0, color: 'red', target: "セブンイレブン", riddle: "「朝は4本、昼は2本、夜は3本」さて何？", answer: "人間", identified: false, solved: false, riddleCleared: false, clearsId: 5 },
+            { id: 1, color: 'blue', target: "任天堂", riddle: "マリオの帽子のマークは？", answer: "M", identified: false, solved: false, riddleCleared: false, clearsId: 0 },
+            { id: 2, color: 'green', target: "ディズニー", riddle: "ミッキーの誕生日は11月何日？", answer: "18", identified: false, solved: false, riddleCleared: false, clearsId: 10 },
+            { id: 3, color: 'yellow', target: "ファミマ", riddle: "「あなたとコンビに」の続きは？", answer: "ファミリーマート", identified: false, solved: false, riddleCleared: false, clearsId: 15 },
+            { id: 4, color: 'yellow', target: "ローソン", riddle: "ロゴにあるミルク缶の色は？", answer: "白", identified: false, solved: false, riddleCleared: false, clearsId: 1 },
+            { id: 5, color: 'green', target: "マクドナルド", riddle: "ポテトMの目安g数は？", answer: "135", identified: false, solved: false, riddleCleared: false, clearsId: 12 },
+            { id: 6, color: 'blue', target: "郵便局", riddle: "郵便マークの由来は？", answer: "テ", identified: false, solved: false, riddleCleared: false, clearsId: 3 },
+            { id: 7, color: 'red', target: "スタバ", riddle: "人魚の名前は？", answer: "サイレン", identified: false, solved: false, riddleCleared: false, clearsId: 6 },
+            { id: 8, color: 'blue', target: "ダイソー", riddle: "社名の由来は「大きく●●る」", answer: "創る", identified: false, solved: false, riddleCleared: false, clearsId: 2 },
+            { id: 9, color: 'red', target: "ユニクロ", riddle: "正式名称の最後は？", answer: "ウェア", identified: false, solved: false, riddleCleared: false, clearsId: 13 },
+            { id: 10, color: 'yellow', target: "くら寿司", riddle: "5皿でできるゲームは？", answer: "ビッくらポン", identified: false, solved: false, riddleCleared: false, clearsId: 4 },
+            { id: 11, color: 'green', target: "吉野家", riddle: "牛の角の間にあるものは？", answer: "ひょうたん", identified: false, solved: false, riddleCleared: false, clearsId: 14 },
+            { id: 12, color: 'green', target: "ニトリ", riddle: "お、ねだん●●●", answer: "以上", identified: false, solved: false, riddleCleared: false, clearsId: 7 },
+            { id: 13, color: 'yellow', target: "イオン", riddle: "旧社名は？", answer: "ジャスコ", identified: false, solved: false, riddleCleared: false, clearsId: 8 },
+            { id: 14, color: 'red', target: "ガスト", riddle: "看板の赤い鳥。名前はある？ない？", answer: "ない", identified: false, solved: false, riddleCleared: false, clearsId: 11 },
+            { id: 15, color: 'blue', target: "コカコーラ", riddle: "サンタを赤くした会社は？", answer: "コカコーラ", identified: false, solved: false, riddleCleared: false, clearsId: 9 }
         ];
 
         let BINGO_MASTER = [];
         let gameRoute = 'none'; let itemsCount = 0; let completedLines = []; let currentIdx = null; let itemMode = false;
 
         function loadGame() {
-            const saved = localStorage.getItem('bingo_final_save');
+            const saved = localStorage.getItem('bingo_final_v5_save');
             if(saved) {
                 const data = JSON.parse(saved); BINGO_MASTER = data.master; gameRoute = data.route || 'none'; itemsCount = data.items || 0; completedLines = data.lines || [];
             } else { BINGO_MASTER = JSON.parse(JSON.stringify(DEFAULT_BINGO_DATA)); }
@@ -134,15 +138,16 @@
         }
 
         function saveGame() {
-            localStorage.setItem('bingo_final_save', JSON.stringify({ master: BINGO_MASTER, route: gameRoute, items: itemsCount, lines: completedLines }));
+            localStorage.setItem('bingo_final_v5_save', JSON.stringify({ master: BINGO_MASTER, route: gameRoute, items: itemsCount, lines: completedLines }));
             if(BINGO_MASTER.every(d => d.solved)) showClearScreen();
         }
 
         function renderBoard() {
             const board = document.getElementById("bingo-board"); board.innerHTML = "";
-            const colors = ['col-red', 'col-blue', 'col-green', 'col-yellow'];
             BINGO_MASTER.forEach((d, i) => {
-                const cell = document.createElement("div"); cell.className = `cell ${colors[i % 4]}`;
+                const cell = document.createElement("div"); 
+                // ★ 個別に設定された色(color)をクラスとして適用
+                cell.className = `cell col-${d.color || 'red'}`;
                 if (d.identified) cell.classList.add("identified");
                 if (d.solved) cell.classList.add("complete");
                 cell.innerHTML = `<span>${d.target}</span>` + (d.riddleCleared ? `<div class="ans-label">答: ${d.answer}</div>` : "");
