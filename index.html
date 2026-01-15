@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BINGO MYSTERY AI - Final</title>
+    <title>BINGO MYSTERY AI - Layout Fixed</title>
     <style>
         :root { --primary: #00f2fe; --accent: #4facfe; --bg: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
         /* 設定エリア */
-        .setup-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--accent); position: relative; box-sizing: border-box; }
+        .setup-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--accent); box-sizing: border-box; }
         .setup-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
-        .reset-btn { position: absolute; right: 10px; top: 10px; font-size: 0.6rem; background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
 
         /* ビンゴグリッド */
         .bingo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
@@ -23,6 +22,11 @@
         .cell.identified { border: 2px solid #fbbf24; } 
         .cell.complete { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #0f172a; border: none; box-shadow: 0 0 15px var(--primary); }
         .ans-label { font-size: 0.5rem; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.2); width: 100%; padding-top: 2px; color: #0f172a; }
+
+        /* リセットボタン（最下部用） */
+        .footer-area { width: 100%; max-width: 400px; display: flex; justify-content: center; padding: 20px 0 40px 0; }
+        .reset-btn { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: bold; opacity: 0.7; transition: 0.3s; }
+        .reset-btn:hover { opacity: 1; }
 
         /* モーダル */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
@@ -46,10 +50,13 @@
 
     <div class="setup-section">
         <input type="password" id="test-api-key" placeholder="Gemini APIキーを入力">
-        <button class="reset-btn" onclick="resetGame()">RESET</button>
     </div>
 
     <div class="bingo-grid" id="bingo-board"></div>
+
+    <div class="footer-area">
+        <button class="reset-btn" onclick="resetGame()">ゲームをリセットして最初から</button>
+    </div>
 
     <div id="modal">
         <div class="modal-content">
@@ -98,19 +105,16 @@
         let BINGO_MASTER = [];
         let currentIdx = null;
 
-        // セーブデータの読み込み
         function loadGame() {
             const saved = localStorage.getItem('bingo_save_data');
             BINGO_MASTER = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_BINGO_DATA));
             renderBoard();
         }
 
-        // セーブデータの保存
         function saveGame() {
             localStorage.setItem('bingo_save_data', JSON.stringify(BINGO_MASTER));
         }
 
-        // リセット機能
         function resetGame() {
             if(confirm("全データを消去してリセットしますか？")) {
                 localStorage.removeItem('bingo_save_data');
@@ -146,12 +150,10 @@
             const riddleSec = document.getElementById("riddle-section");
 
             if(data.identified) {
-                // すでに撮影済みの場合はカメラを隠して問題を表示
                 captureSec.style.display = "none";
                 riddleSec.style.display = "block";
                 document.getElementById("riddle-text").innerText = data.riddle;
             } else {
-                // 未撮影の場合はカメラを表示
                 captureSec.style.display = "block";
                 riddleSec.style.display = "none";
                 document.getElementById("video").style.display = "block";
@@ -174,7 +176,6 @@
             renderBoard();
         }
 
-        // ★これが画像認識システムの本体です
         async function analyzeSpot() {
             const apiKey = document.getElementById("test-api-key").value.trim();
             if(!apiKey) { alert("APIキーを入力してください"); return; }
@@ -184,7 +185,6 @@
             const ctx = canvas.getContext("2d");
             const data = BINGO_MASTER[currentIdx];
 
-            // 1. 画像をフリーズさせる
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0);
@@ -193,7 +193,6 @@
             document.getElementById("ai-status").innerText = "AI解析中...";
 
             const imgBase64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
-            // Google Gemini APIに直接アクセス
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             try {
