@@ -95,20 +95,20 @@
         const DEFAULT_DATA = [
             { id: 0, color: 'red', target: "セブンイレブン", riddle: "「朝は4本、昼は2本、夜は3本」さて何？", answer: "人間", trueAnswer: "セブン", identified: false, solved: false, riddleCleared: false, clearsId: 5 },
             { id: 1, color: 'blue', target: "任天堂", riddle: "マリオの帽子のマークは？", answer: "M", trueAnswer: "任天堂", identified: false, solved: false, riddleCleared: false, clearsId: 0 },
-            { id: 2, color: 'green', target: "ディズニー", riddle: "ミッキーの誕生日は11月18日。ではミニーは？", answer: "11月18日", trueAnswer: "ディズニー", identified: false, solved: false, riddleCleared: false, clearsId: 10 },
-            { id: 3, color: 'yellow', target: "ファミマ", riddle: "「あなたとコンビに」の続きは？", answer: "ファミリーマート", trueAnswer: "ファミマ", identified: false, solved: false, riddleCleared: false, clearsId: 15 },
+            { id: 2, color: 'green', target: "セガ", riddle: "ミッキーの誕生日は11月18日。ではミニーは？", answer: "11月18日", trueAnswer: "ディズニー", identified: false, solved: false, riddleCleared: false, clearsId: 10 },
+            { id: 3, color: 'yellow', target: "ユニクロ", riddle: "「あなたとコンビに」の続きは？", answer: "ファミリーマート", trueAnswer: "ファミマ", identified: false, solved: false, riddleCleared: false, clearsId: 15 },
             { id: 4, color: 'yellow', target: "ローソン", riddle: "ミルク缶の色は？", answer: "白", trueAnswer: "ローソン", identified: false, solved: false, riddleCleared: false, clearsId: 1 },
-            { id: 5, color: 'green', target: "マクドナルド", riddle: "ポテトMの目安g数は？", answer: "135", trueAnswer: "マック", identified: false, solved: false, riddleCleared: false, clearsId: 12 },
-            { id: 6, color: 'blue', target: "郵便局", riddle: "郵便マーク（〒）の由来は？", answer: "テ", trueAnswer: "ユウビン", identified: false, solved: false, riddleCleared: false, clearsId: 3 },
-            { id: 7, color: 'red', target: "スタバ", riddle: "人魚の名前は？", answer: "サイレン", trueAnswer: "スタバ", identified: false, solved: false, riddleCleared: false, clearsId: 6 },
-            { id: 8, color: 'blue', target: "ダイソー", riddle: "社名の由来は「大きく●●る」", answer: "創る", trueAnswer: "ダイソー", identified: false, solved: false, riddleCleared: false, clearsId: 2 },
-            { id: 9, color: 'red', target: "ユニクロ", riddle: "正式名称の最後は？", answer: "ウェア", trueAnswer: "ユニクロ", identified: false, solved: false, riddleCleared: false, clearsId: 13 },
-            { id: 10, color: 'yellow', target: "くら寿司", riddle: "5皿でできるゲーム名は？", answer: "ビッくらポン", trueAnswer: "クラスシ", identified: false, solved: false, riddleCleared: false, clearsId: 4 },
-            { id: 11, color: 'green', target: "吉野家", riddle: "牛の角の間にあるものは？", answer: "ひょうたん", trueAnswer: "ヨシノヤ", identified: false, solved: false, riddleCleared: false, clearsId: 14 },
+            { id: 5, color: 'green', target: "雪印メグミルク", riddle: "ポテトMの目安g数は？", answer: "135", trueAnswer: "マック", identified: false, solved: false, riddleCleared: false, clearsId: 12 },
+            { id: 6, color: 'blue', target: "ミスタードーナツ", riddle: "郵便マーク（〒）の由来は？", answer: "テ", trueAnswer: "ユウビン", identified: false, solved: false, riddleCleared: false, clearsId: 3 },
+            { id: 7, color: 'red', target: "スターバックス", riddle: "人魚の名前は？", answer: "サイレン", trueAnswer: "スタバ", identified: false, solved: false, riddleCleared: false, clearsId: 6 },
+            { id: 8, color: 'blue', target: "すき家", riddle: "社名の由来は「大きく●●る」", answer: "創る", trueAnswer: "ダイソー", identified: false, solved: false, riddleCleared: false, clearsId: 2 },
+            { id: 9, color: 'red', target: "イオン", riddle: "正式名称の最後は？", answer: "ウェア", trueAnswer: "ユニクロ", identified: false, solved: false, riddleCleared: false, clearsId: 13 },
+            { id: 10, color: 'yellow', target: "マツモトキヨシ", riddle: "5皿でできるゲーム名は？", answer: "ビッくらポン", trueAnswer: "クラスシ", identified: false, solved: false, riddleCleared: false, clearsId: 4 },
+            { id: 11, color: 'green', target: "丸亀製麺", riddle: "牛の角の間にあるものは？", answer: "ひょうたん", trueAnswer: "ヨシノヤ", identified: false, solved: false, riddleCleared: false, clearsId: 14 },
             { id: 12, color: 'green', target: "ニトリ", riddle: "お、ねだん●●●", answer: "以上", trueAnswer: "ニトリ", identified: false, solved: false, riddleCleared: false, clearsId: 7 },
-            { id: 13, color: 'yellow', target: "イオン", riddle: "旧社名は？", answer: "ジャスコ", trueAnswer: "イオン", identified: false, solved: false, riddleCleared: false, clearsId: 8 },
-            { id: 14, color: 'red', target: "ガスト", riddle: "看板の鳥に名前はある？", answer: "ない", trueAnswer: "ガスト", identified: false, solved: false, riddleCleared: false, clearsId: 11 },
-            { id: 15, color: 'blue', target: "コカコーラ", riddle: "サンタを赤くした会社は？", answer: "コカコーラ", trueAnswer: "コーク", identified: false, solved: false, riddleCleared: false, clearsId: 9 }
+            { id: 13, color: 'yellow', target: "味の素", riddle: "旧社名は？", answer: "ジャスコ", trueAnswer: "イオン", identified: false, solved: false, riddleCleared: false, clearsId: 8 },
+            { id: 14, color: 'red', target: "たからくじ", riddle: "看板の鳥に名前はある？", answer: "ない", trueAnswer: "ガスト", identified: false, solved: false, riddleCleared: false, clearsId: 11 },
+            { id: 15, color: 'blue', target: "コクヨ", riddle: "サンタを赤くした会社は？", answer: "コカコーラ", trueAnswer: "コーク", identified: false, solved: false, riddleCleared: false, clearsId: 9 }
         ];
 
         let MASTER = []; let route = 'none'; let items = 10; let lines = []; let current = null; let itemMode = false; let finaleSeen = false;
