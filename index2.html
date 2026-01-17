@@ -286,12 +286,12 @@ async function analyzeSpot() {
             overlay.style.display = "flex";
             if(route === 'self') {
                 title.innerText = "NORMAL END";
-                msg.innerText = "すべてを自分自身で埋めました。";
+                msg.innerText = "クリア率80％";
                 hint.style.display = "block";
-                hint.innerText = "【ヒント】最初の一手で「別の正解」を打ち込み、リンクする別のマスを選択してみてください。";
+                hint.innerText = "何か違和感はない？一部の問題がすり替えられていて順番もバラバラだったみたい";
             } else {
                 title.innerHTML = "TRUE ENDING";
-                msg.innerText = "連鎖の謎を解き明かし、真実の答えに辿り着きました！";
+                msg.innerText = "クリア率100％！！連鎖の謎を解き明かし、真実の答えに辿り着きました！";
                 createConfetti();
             }
         }
