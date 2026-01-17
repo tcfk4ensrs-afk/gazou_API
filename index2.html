@@ -10,8 +10,10 @@
 
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
-        .setup-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #4facfe; box-sizing: border-box; }
-        .setup-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
+        /* 隠しコマンド用フォーム */
+        .command-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #475569; box-sizing: border-box; }
+        .command-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
+        .command-section button { margin-top: 5px; padding: 8px; font-size: 0.8rem; background: #334155; color: white; border: none; border-radius: 5px; width: 100%; cursor: pointer; }
 
         .item-inventory { width: 95%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid gold; box-sizing: border-box; }
         .item-btn { background: linear-gradient(135deg, gold, #f39c12); color: black; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
@@ -32,11 +34,10 @@
         #view-container { width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 15px; overflow: hidden; margin: 10px 0; border: 2px solid #334155; position: relative; }
         video, canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
         
-        /* 画像表示用のコンテナ */
         #riddle-display-area { width: 100%; height: 350px; background: #111; border-radius: 10px; margin-bottom: 10px; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 1px solid #334155; }
         #riddle-image { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-        button { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
+        .action-btn { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
         .btn-target { background: #1e293b; color: white; border: 1px solid #4facfe; font-size: 0.8rem; padding: 10px; margin-bottom: 5px; border-radius: 8px; width: 100%; }
         .btn-target:active { background: #4facfe; color: black; }
     </style>
@@ -45,8 +46,9 @@
 
     <h2 style="margin: 10px 0;">BINGO MYSTERY AI</h2>
 
-    <div class="setup-section">
-        <input type="password" id="test-api-key" placeholder="Gemini APIキーを入力">
+    <div class="command-section">
+        <input type="text" id="command-input" placeholder="メッセージを入力...">
+        <button onclick="executeCommand()">送信</button>
     </div>
 
     <div class="item-inventory">
@@ -67,7 +69,7 @@
             <div id="clear-title" class="gold-title">FINISH</div>
             <p id="clear-msg" style="line-height: 1.6; margin-bottom: 20px;"></p>
             <div id="hint-box" style="display:none; color: gold; font-size: 0.8rem; border-top: 1px solid #444; padding-top: 15px; margin-bottom: 15px;"></div>
-            <button id="close-finale-btn" style="background:#fff; color:#000;" onclick="closeFinale()">次へ</button>
+            <button id="close-finale-btn" style="background:#fff; color:#000; padding:10px; border-radius:10px; width:100%;" onclick="closeFinale()">次へ</button>
         </div>
     </div>
 
@@ -81,15 +83,13 @@
             
             <div id="capture-section">
                 <div id="view-container"><video id="video" autoplay playsinline></video><canvas id="canvas"></canvas></div>
-                <button style="background:#4facfe; color:white; width:100%; padding:15px; border-radius:10px;" onclick="analyzeSpot()">📸 撮影して「開放」する</button>
+                <button class="action-btn" style="background:#4facfe; color:white;" onclick="analyzeSpot()">📸 撮影して「開放」する</button>
             </div>
 
             <div id="riddle-section" style="display:none;" class="input-group">
-                <div id="riddle-display-area">
-                    <img id="riddle-image" src="" alt="Mystery Riddle">
-                </div>
+                <div id="riddle-display-area"><img id="riddle-image" src="" alt="Riddle"></div>
                 <input type="text" id="answer-input" style="width:100%; padding:12px; border-radius:8px; background:#1e293b; color:white; border:1px solid #475569; box-sizing:border-box;" placeholder="答えを入力">
-                <button id="check-ans-btn" style="background:#fbbf24; color:black; width:100%;" onclick="verifyAnswer()">正解判定する</button>
+                <button id="check-ans-btn" class="action-btn" style="background:#fbbf24; color:black;" onclick="verifyAnswer()">正解判定する</button>
                 
                 <div id="target-selection-area" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px;">
                     <label id="selection-label" style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">空けるマスを選択してください：</label>
@@ -97,7 +97,7 @@
                 </div>
             </div>
             
-            <button style="background:#334155; color:white; width:100%; margin-top:10px;" onclick="closeModal()">戻る</button>
+            <button class="action-btn" style="background:#334155; color:white;" onclick="closeModal()">戻る</button>
         </div>
     </div>
 
@@ -121,7 +121,8 @@
             { id: 15, color: 'yellow', target: "コクヨ", riddle: "images/16.png", answer: "コクヨ", trueAnswer: "予告", identified: false, solved: false, riddleCleared: false, clearsId: 15 }
         ];
 
-        let MASTER = []; let route = 'none'; let items = 0; let lines = []; let current = null; let itemMode = false; let finaleSeen = false;
+        let MASTER = []; let route = 'none'; let items = 0; let lines = []; let current = null; 
+        let itemMode = false; let finaleSeen = false; let limitMode = false; // 答え表示モード
 
         function load() {
             const saved = localStorage.getItem('bingo_grand_v8_save');
@@ -145,7 +146,12 @@
                 if(d.solved) cell.classList.add("complete");
                 let ans = (route === 'cross') ? d.trueAnswer : (Array.isArray(d.answer) ? d.answer[0] : d.answer);
                 cell.innerHTML = `<span>${d.target}</span>` + (d.riddleCleared ? `<div class="ans-label">答: ${ans}</div>` : "");
-                cell.onclick = () => itemMode ? useItem(i) : openModal(i);
+                
+                cell.onclick = () => {
+                    if (itemMode) { useItem(i); }
+                    else if (limitMode) { showCheatAnswer(i); }
+                    else { openModal(i); }
+                };
                 board.appendChild(cell);
             });
         }
@@ -156,7 +162,24 @@
             b.innerText = itemMode ? "CANCEL" : "ITEM USE"; b.style.background = itemMode ? "#ef4444" : "";
         }
 
-        function toggleItemMode() { itemMode = !itemMode; updateUI(); }
+        /* 隠しコマンド実行 */
+        function executeCommand() {
+            const input = document.getElementById("command-input").value.trim();
+            if (input === "もうわからない") {
+                items += 5; updateUI(); save(); alert("マスターキーを5個取得しました。");
+            } else if (input === "もう限界") {
+                limitMode = true; alert("回答表示モードになりました。マスを選択してください。");
+            }
+            document.getElementById("command-input").value = "";
+        }
+
+        function showCheatAnswer(i) {
+            const ans = Array.isArray(MASTER[i].answer) ? MASTER[i].answer[0] : MASTER[i].answer;
+            alert(`マス${i+1} (${MASTER[i].target}) の答え: ${ans}`);
+            limitMode = false; // 一度表示したら解除
+        }
+
+        function toggleItemMode() { itemMode = !itemMode; limitMode = false; updateUI(); }
 
         function useItem(i) {
             if(MASTER[i].identified || MASTER[i].solved) return;
@@ -171,7 +194,6 @@
 
             if(d.identified) {
                 document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
-                // PNG画像を表示
                 document.getElementById("riddle-image").src = d.riddle;
             } else {
                 document.getElementById("capture-section").style.display = "block"; document.getElementById("riddle-section").style.display = "none";
@@ -180,47 +202,21 @@
             }
         }
 
-        // index.html 内の analyzeSpot 関数を以下に差し替え
-async function analyzeSpot() {
-    const v = document.getElementById("video");
-    const c = document.getElementById("canvas");
-    c.width = v.videoWidth;
-    c.height = v.videoHeight;
-    c.getContext("2d").drawImage(v, 0, 0);
-    
-    v.style.display = "none";
-    c.style.display = "block";
-    
-    // 画像をBase64文字列に変換（ヘッダー部分は除く）
-    const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
-    const targetName = MASTER[current].target;
-
-    try {
-        // Netlify Function を呼び出し
-        const response = await fetch('/.netlify/functions/analyze', {
-            method: 'POST',
-            body: JSON.stringify({ target: targetName, image: imgData })
-        });
-
-        const data = await response.json();
-        
-        if (data.result && data.result.toUpperCase().includes("YES")) {
-            MASTER[current].identified = true;
-            save();
-            document.getElementById("capture-section").style.display = "none";
-            document.getElementById("riddle-section").style.display = "block";
-            document.getElementById("riddle-image").src = MASTER[current].riddle;
-        } else {
-            v.style.display = "block";
-            c.style.display = "none";
-            alert("判定失敗: 対象が見つかりません");
+        async function analyzeSpot() {
+            const v = document.getElementById("video"); const c = document.getElementById("canvas");
+            c.width = v.videoWidth; c.height = v.videoHeight; c.getContext("2d").drawImage(v, 0, 0);
+            v.style.display = "none"; c.style.display = "block";
+            const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
+            try {
+                const response = await fetch('/.netlify/functions/analyze', { method: 'POST', body: JSON.stringify({ target: MASTER[current].target, image: imgData }) });
+                const data = await response.json();
+                if (data.result && data.result.toUpperCase().includes("YES")) {
+                    MASTER[current].identified = true; save();
+                    document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
+                    document.getElementById("riddle-image").src = MASTER[current].riddle;
+                } else { v.style.display = "block"; c.style.display = "none"; alert("判定失敗: 対象が見つかりません"); }
+            } catch (e) { alert("AI Error"); v.style.display = "block"; c.style.display = "none"; }
         }
-    } catch (e) {
-        alert("通信エラーが発生しました");
-        v.style.display = "block";
-        c.style.display = "none";
-    }
-}
 
         function verifyAnswer() {
             const input = document.getElementById("answer-input").value.trim();
@@ -241,8 +237,7 @@ async function analyzeSpot() {
             const list = document.getElementById("target-list"); list.innerHTML = "";
             MASTER.forEach((m, idx) => {
                 if(!m.solved && m.identified) {
-                    const btn = document.createElement("button");
-                    btn.className = "btn-target";
+                    const btn = document.createElement("button"); btn.className = "btn-target";
                     btn.innerText = `マス${idx+1}: ${m.target}`;
                     btn.onclick = () => finalize(idx, okN, okT);
                     list.appendChild(btn);
@@ -266,8 +261,7 @@ async function analyzeSpot() {
             }
 
             alert("正解！マスが空きました。");
-            MASTER[current].riddleCleared = true;
-            MASTER[targetIdx].solved = true;
+            MASTER[current].riddleCleared = true; MASTER[targetIdx].solved = true;
             save(); checkBingo(); closeModal(); render();
         }
 
@@ -285,13 +279,10 @@ async function analyzeSpot() {
             const hint = document.getElementById("hint-box");
             overlay.style.display = "flex";
             if(route === 'self') {
-                title.innerText = "NORMAL END";
-                msg.innerText = "クリア率80％";
-                hint.style.display = "block";
-                hint.innerText = "何か違和感はない？一部の問題がすり替えられていて順番もバラバラだったみたい";
+                title.innerText = "NORMAL END"; msg.innerText = "クリア率80％";
+                hint.style.display = "block"; hint.innerText = "何か違和感はない？一部の問題がすり替えられていて順番もバラバラだったみたい";
             } else {
-                title.innerHTML = "TRUE ENDING";
-                msg.innerText = "クリア率100％！！連鎖の謎を解き明かし、真実の答えに辿り着きました！";
+                title.innerHTML = "TRUE ENDING"; msg.innerText = "クリア率100％！！連鎖の謎を解き明かし、真実の答えに辿り着きました！";
                 createConfetti();
             }
         }
