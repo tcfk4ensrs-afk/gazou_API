@@ -28,10 +28,14 @@
         .confetti { position: absolute; width: 10px; height: 10px; background: gold; animation: fall 3s linear infinite; }
         @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
 
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 15px; box-sizing: border-box; overflow-y: auto; }
         #view-container { width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 15px; overflow: hidden; margin: 10px 0; border: 2px solid #334155; position: relative; }
         video, canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
         
+        /* PDF表示用のコンテナ */
+        #pdf-container { width: 100%; height: 350px; background: #fff; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; }
+
         button { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
         .btn-target { background: #1e293b; color: white; border: 1px solid #4facfe; font-size: 0.8rem; padding: 10px; margin-bottom: 5px; border-radius: 8px; width: 100%; }
         .btn-target:active { background: #4facfe; color: black; }
@@ -74,19 +78,25 @@
     <div id="modal">
         <div class="modal-content" style="max-width: 400px; margin: auto;">
             <h2 id="modal-title" style="color:#4facfe; margin:0 0 10px 0;">TARGET</h2>
+            
             <div id="capture-section">
                 <div id="view-container"><video id="video" autoplay playsinline></video><canvas id="canvas"></canvas></div>
                 <button style="background:#4facfe; color:white; width:100%; padding:15px; border-radius:10px;" onclick="analyzeSpot()">📸 撮影して「開放」する</button>
             </div>
+
             <div id="riddle-section" style="display:none;" class="input-group">
-                <p id="riddle-text" style="line-height: 1.6; margin-bottom: 10px;"></p>
+                <div id="pdf-container">
+                    <iframe id="pdf-viewer" src=""></iframe>
+                </div>
                 <input type="text" id="answer-input" style="width:100%; padding:12px; border-radius:8px; background:#1e293b; color:white; border:1px solid #475569; box-sizing:border-box;" placeholder="答えを入力">
                 <button id="check-ans-btn" style="background:#fbbf24; color:black; width:100%;" onclick="verifyAnswer()">正解判定する</button>
+                
                 <div id="target-selection-area" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px;">
                     <label id="selection-label" style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">空けるマスを選択してください：</label>
                     <div id="target-list"></div>
                 </div>
             </div>
+            
             <button style="background:#334155; color:white; width:100%; margin-top:10px;" onclick="closeModal()">戻る</button>
         </div>
     </div>
@@ -133,7 +143,7 @@
                 const cell = document.createElement("div"); cell.className = `cell col-${d.color}`;
                 if(d.identified) cell.classList.add("identified");
                 if(d.solved) cell.classList.add("complete");
-                let ans = (route === 'cross') ? d.trueAnswer : d.answer;
+                let ans = (route === 'cross') ? d.trueAnswer : (Array.isArray(d.answer) ? d.answer[0] : d.answer);
                 cell.innerHTML = `<span>${d.target}</span>` + (d.riddleCleared ? `<div class="ans-label">答: ${ans}</div>` : "");
                 cell.onclick = () => itemMode ? useItem(i) : openModal(i);
                 board.appendChild(cell);
@@ -157,9 +167,12 @@
             current = i; const d = MASTER[i];
             document.getElementById("modal-title").innerText = d.target; document.getElementById("modal").style.display = "block";
             document.getElementById("target-selection-area").style.display = "none"; document.getElementById("check-ans-btn").disabled = false;
+            document.getElementById("answer-input").value = "";
+
             if(d.identified) {
                 document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
-                document.getElementById("riddle-text").innerText = d.riddle;
+                // PDFを表示
+                document.getElementById("pdf-viewer").src = d.riddle;
             } else {
                 document.getElementById("capture-section").style.display = "block"; document.getElementById("riddle-section").style.display = "none";
                 document.getElementById("video").style.display = "block"; document.getElementById("canvas").style.display = "none";
@@ -181,52 +194,39 @@
                 if(res.candidates[0].content.parts[0].text.toUpperCase().includes("YES")) {
                     MASTER[current].identified = true; save();
                     document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
-                    document.getElementById("riddle-text").innerText = MASTER[current].riddle;
-                } else { v.style.display = "block"; c.style.display = "none"; alert("判定失敗"); }
+                    document.getElementById("pdf-viewer").src = MASTER[current].riddle;
+                } else { v.style.display = "block"; c.style.display = "none"; alert("判定失敗: 対象が見つかりません"); }
             } catch(e) { alert("AI Error"); }
         }
 
-        // 解答チェック
         function verifyAnswer() {
             const input = document.getElementById("answer-input").value.trim();
             const d = MASTER[current];
-            const okN = (input === d.answer); const okT = (input === d.trueAnswer);
             
-            // 確定ルートとの矛盾チェック
+            const okN = Array.isArray(d.answer) ? d.answer.includes(input) : (input === d.answer);
+            const okT = (input === d.trueAnswer);
+            
             if(route === 'self' && !okN) return alert("不正解");
             if(route === 'cross' && !okT) return alert("不正解");
             if(route === 'none' && !okN && !okT) return alert("不正解");
 
             document.getElementById("check-ans-btn").disabled = true;
             document.getElementById("target-selection-area").style.display = "block";
-            
-            // ★ここを変更：すべての「開放済み(identified)かつ未クリア(solved)」のマスを表示
             renderTargetButtons(okN, okT);
         }
 
-        // すべての開放済みマスをリストに表示
         function renderTargetButtons(okN, okT) {
             const list = document.getElementById("target-list"); list.innerHTML = "";
-            const currentCell = MASTER[current];
-
             MASTER.forEach((m, idx) => {
-                // すでに空いているマスは出さない
                 if(!m.solved && m.identified) {
                     const btn = document.createElement("button");
                     btn.className = "btn-target";
                     btn.innerText = `マス${idx+1}: ${m.target}`;
-                    
-                    // クリック時の判定
                     btn.onclick = () => finalize(idx, okN, okT);
                     list.appendChild(btn);
                 }
             });
-            
-            if(list.innerHTML === "") {
-                document.getElementById("selection-label").innerText = "開放されている空きマスがありません。";
-            } else {
-                document.getElementById("selection-label").innerText = "空ける対象のマスを選択してください：";
-            }
+            if(list.innerHTML === "") document.getElementById("selection-label").innerText = "開放されている空きマスがありません。";
         }
 
         function finalize(targetIdx, okN, okT) {
@@ -234,25 +234,13 @@
             const isSelfChoice = (targetIdx === current);
             const isCrossChoice = (targetIdx === currentCell.clearsId);
 
-            // ルート確定後の矛盾チェック
             if(route === 'self' && !isSelfChoice) return alert("対象マスではないです。");
             if(route === 'cross' && !isCrossChoice) return alert("対象マスではないです。");
             
-            // ルート未確定時の判定
             if(route === 'none') {
-                if(isSelfChoice && okN) {
-                    route = 'self';
-                    alert("");
-                } else if(isCrossChoice && okT) {
-                    route = 'cross';
-                    alert("【真エンドルート確定】");
-                } else {
-                    return alert("対象マスではないです。");
-                }
-            } else {
-                // ルート確定済みで、正しいマスを選んでいない場合
-                if(route === 'self' && !isSelfChoice) return alert("対象マスではないです。");
-                if(route === 'cross' && !isCrossChoice) return alert("対象マスではないです。");
+                if(isSelfChoice && okN) { route = 'self'; } 
+                else if(isCrossChoice && okT) { route = 'cross'; alert("【真エンドルート確定】"); } 
+                else { return alert("対象マスまたは解答が一致しません。"); }
             }
 
             alert("正解！マスが空きました。");
@@ -273,18 +261,15 @@
             const title = document.getElementById("clear-title");
             const msg = document.getElementById("clear-msg");
             const hint = document.getElementById("hint-box");
-            const btn = document.getElementById("close-finale-btn");
             overlay.style.display = "flex";
             if(route === 'self') {
                 title.innerText = "NORMAL END";
-                msg.innerText = "すべてを自分自身で埋めました。\n写真データは残しておきました。";
+                msg.innerText = "すべてを自分自身で埋めました。";
                 hint.style.display = "block";
-                hint.innerText = "【新エンドへの道】\n全マスのスキャンデータを開放状態で維持しました。\n最初の一手で「別の正解」を打ち込み、パズルの連鎖を解き明かしてください。";
-                btn.innerText = "新エンドの検討を始める";
+                hint.innerText = "【ヒント】最初の一手で「別の正解」を打ち込み、リンクする別のマスを選択してみてください。";
             } else {
                 title.innerHTML = "TRUE ENDING";
                 msg.innerText = "連鎖の謎を解き明かし、真実の答えに辿り着きました！";
-                btn.innerText = "ボードを確認する";
                 createConfetti();
             }
         }
@@ -293,13 +278,8 @@
             if(route === 'self') {
                 MASTER.forEach(d => { d.identified = true; d.solved = false; d.riddleCleared = false; });
                 route = 'none'; items = 0; lines = []; finaleSeen = false;
-                alert("検討モード：全マスのスキャンが完了した状態でリスタートしました。");
-            } else {
-                finaleSeen = true;
-            }
-            save();
-            document.getElementById("clear-overlay").style.display = "none";
-            render();
+            } else { finaleSeen = true; }
+            save(); document.getElementById("clear-overlay").style.display = "none"; render();
         }
 
         function createConfetti() {
@@ -314,6 +294,7 @@
 
         function closeModal() {
             const v = document.getElementById("video"); if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop());
+            document.getElementById("pdf-viewer").src = "";
             document.getElementById("modal").style.display = "none"; render();
         }
 
