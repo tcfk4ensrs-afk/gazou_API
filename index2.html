@@ -180,24 +180,47 @@
             }
         }
 
-        async function analyzeSpot() {
-            const k = document.getElementById("test-api-key").value; if(!k) return alert("API Key Required");
-            const v = document.getElementById("video"); const c = document.getElementById("canvas");
-            c.width = v.videoWidth; c.height = v.videoHeight; c.getContext("2d").drawImage(v, 0, 0);
-            v.style.display = "none"; c.style.display = "block";
-            const img = c.toDataURL("image/jpeg", 0.7).split(",")[1];
-            try {
-                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${k}`, {
-                    method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: `Is "${MASTER[current].target}" here? YES/NO.` }, { inline_data: { mime_type: "image/jpeg", data: img } }] }] })
-                });
-                const res = await r.json();
-                if(res.candidates[0].content.parts[0].text.toUpperCase().includes("YES")) {
-                    MASTER[current].identified = true; save();
-                    document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
-                    document.getElementById("riddle-image").src = MASTER[current].riddle;
-                } else { v.style.display = "block"; c.style.display = "none"; alert("判定失敗: 対象が見つかりません"); }
-            } catch(e) { alert("AI Error"); }
+        // index.html 内の analyzeSpot 関数を以下に差し替え
+async function analyzeSpot() {
+    const v = document.getElementById("video");
+    const c = document.getElementById("canvas");
+    c.width = v.videoWidth;
+    c.height = v.videoHeight;
+    c.getContext("2d").drawImage(v, 0, 0);
+    
+    v.style.display = "none";
+    c.style.display = "block";
+    
+    // 画像をBase64文字列に変換（ヘッダー部分は除く）
+    const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
+    const targetName = MASTER[current].target;
+
+    try {
+        // Netlify Function を呼び出し
+        const response = await fetch('/.netlify/functions/analyze', {
+            method: 'POST',
+            body: JSON.stringify({ target: targetName, image: imgData })
+        });
+
+        const data = await response.json();
+        
+        if (data.result && data.result.toUpperCase().includes("YES")) {
+            MASTER[current].identified = true;
+            save();
+            document.getElementById("capture-section").style.display = "none";
+            document.getElementById("riddle-section").style.display = "block";
+            document.getElementById("riddle-image").src = MASTER[current].riddle;
+        } else {
+            v.style.display = "block";
+            c.style.display = "none";
+            alert("判定失敗: 対象が見つかりません");
         }
+    } catch (e) {
+        alert("通信エラーが発生しました");
+        v.style.display = "block";
+        c.style.display = "none";
+    }
+}
 
         function verifyAnswer() {
             const input = document.getElementById("answer-input").value.trim();
