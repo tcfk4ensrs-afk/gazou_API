@@ -93,22 +93,22 @@
 
     <script>
         const DEFAULT_DATA = [
-            { id: 0, color: 'blue', target: "セブンイレブン", riddle:"images/1.png", answer: "キリン", trueAnswer: "キリン", identified: false, solved: false, riddleCleared: false, clearsId: 5 },
-            { id: 1, color: 'red', target: "任天堂", riddle: "images/2.png", answer: ["京都","京都府","kyotofu"], trueAnswer: "京都", identified: false, solved: false, riddleCleared: false, clearsId: 0 },
-            { id: 2, color: 'yellow', target: "セガ", riddle: "images/3.png", answer: "ガセ", trueAnswer: "ガセ", identified: false, solved: false, riddleCleared: false, clearsId: 10 },
-            { id: 3, color: 'green', target: "ユニクロ", riddle: "images/4.png", answer: "赤", trueAnswer: "赤", identified: false, solved: false, riddleCleared: false, clearsId: 15 },
-            { id: 4, color: 'yellow', target: "ローソン", riddle: "images/5.png", answer: "論争", trueAnswer: "論争", identified: false, solved: false, riddleCleared: false, clearsId: 1 },
-            { id: 5, color: 'red', target: "雪印メグミルク", riddle: "images/6.png", answer: "北海道", trueAnswer: "北海道", identified: false, solved: false, riddleCleared: false, clearsId: 12 },
-            { id: 6, color: 'blue', target: "ミスタードーナツ", riddle: "images/7.png", answer: "lion", trueAnswer: "lion", identified: false, solved: false, riddleCleared: false, clearsId: 3 },
-            { id: 7, color: 'red', target: "スターバックス", riddle: "images/8.png", answer: "シアトル", trueAnswer: "シアトル", identified: false, solved: false, riddleCleared: false, clearsId: 6 },
-            { id: 8, color: 'yellow', target: "すき家", riddle: "images/9.png", answer: "すやき", trueAnswer: "すやき", identified: false, solved: false, riddleCleared: false, clearsId: 2 },
-            { id: 9, color: 'green', target: "イオン", riddle: "images/10.png", answer: "紫", trueAnswer: "紫", identified: false, solved: false, riddleCleared: false, clearsId: 13 },
-            { id: 10, color: 'green', target: "マツモトキヨシ", riddle: "images/11.png", answer: "マツキヨ", trueAnswer: "黄色", identified: false, solved: false, riddleCleared: false, clearsId: 4 },
-            { id: 11, color: 'red', target: "丸亀製麺", riddle: "images/12.png", answer: "marugame", trueAnswer: "香川", identified: false, solved: false, riddleCleared: false, clearsId: 14 },
-            { id: 12, color: 'green', target: "ニトリ", riddle: "images/13.png", answer: "緑", trueAnswer: "緑", identified: false, solved: false, riddleCleared: false, clearsId: 7 },
-            { id: 13, color: 'blue', target: "味の素", riddle: "images/14.png", answer: "パンダ", trueAnswer: "パンダ", identified: false, solved: false, riddleCleared: false, clearsId: 8 },
-            { id: 14, color: 'blue', target: "たからくじ", riddle: "images/15.png", answer: "たからくじ", trueAnswer: "くじら", identified: false, solved: false, riddleCleared: false, clearsId: 11 },
-            { id: 15, color: 'yellow', target: "コクヨ", riddle: "images/16.png", answer: "コクヨ", trueAnswer: "予告", identified: false, solved: false, riddleCleared: false, clearsId: 9 }
+            { id: 0, color: 'blue', target: "セブンイレブン", riddle:"images/1.pdf", answer: "キリン", trueAnswer: "キリン", identified: false, solved: false, riddleCleared: false, clearsId: 5 },
+            { id: 1, color: 'red', target: "任天堂", riddle: "images/2.pdf", answer: ["京都","京都府","kyotofu"], trueAnswer: "京都", identified: false, solved: false, riddleCleared: false, clearsId: 0 },
+            { id: 2, color: 'yellow', target: "セガ", riddle: "images/3.pdf", answer: "ガセ", trueAnswer: "ガセ", identified: false, solved: false, riddleCleared: false, clearsId: 10 },
+            { id: 3, color: 'green', target: "ユニクロ", riddle: "images/4.pdf", answer: "赤", trueAnswer: "赤", identified: false, solved: false, riddleCleared: false, clearsId: 15 },
+            { id: 4, color: 'yellow', target: "ローソン", riddle: "images/5.pdf", answer: "論争", trueAnswer: "論争", identified: false, solved: false, riddleCleared: false, clearsId: 1 },
+            { id: 5, color: 'red', target: "雪印メグミルク", riddle: "images/6.pdf", answer: "北海道", trueAnswer: "北海道", identified: false, solved: false, riddleCleared: false, clearsId: 12 },
+            { id: 6, color: 'blue', target: "ミスタードーナツ", riddle: "images/7.pdf", answer: "lion", trueAnswer: "lion", identified: false, solved: false, riddleCleared: false, clearsId: 3 },
+            { id: 7, color: 'red', target: "スターバックス", riddle: "images/8.pdf", answer: "シアトル", trueAnswer: "シアトル", identified: false, solved: false, riddleCleared: false, clearsId: 6 },
+            { id: 8, color: 'yellow', target: "すき家", riddle: "images/9.pdf", answer: "すやき", trueAnswer: "すやき", identified: false, solved: false, riddleCleared: false, clearsId: 2 },
+            { id: 9, color: 'green', target: "イオン", riddle: "images/10.pdf", answer: "紫", trueAnswer: "紫", identified: false, solved: false, riddleCleared: false, clearsId: 13 },
+            { id: 10, color: 'green', target: "マツモトキヨシ", riddle: "images/11.pdf", answer: "マツキヨ", trueAnswer: "黄色", identified: false, solved: false, riddleCleared: false, clearsId: 4 },
+            { id: 11, color: 'red', target: "丸亀製麺", riddle: "images/12.pdf", answer: "marugame", trueAnswer: "香川", identified: false, solved: false, riddleCleared: false, clearsId: 14 },
+            { id: 12, color: 'green', target: "ニトリ", riddle: "images/13.pdf", answer: "緑", trueAnswer: "緑", identified: false, solved: false, riddleCleared: false, clearsId: 7 },
+            { id: 13, color: 'blue', target: "味の素", riddle: "images/14.pdf", answer: "パンダ", trueAnswer: "パンダ", identified: false, solved: false, riddleCleared: false, clearsId: 8 },
+            { id: 14, color: 'blue', target: "たからくじ", riddle: "images/15.pdf", answer: "たからくじ", trueAnswer: "くじら", identified: false, solved: false, riddleCleared: false, clearsId: 11 },
+            { id: 15, color: 'yellow', target: "コクヨ", riddle: "images/16.pdf", answer: "コクヨ", trueAnswer: "予告", identified: false, solved: false, riddleCleared: false, clearsId: 9 }
         ];
 
         let MASTER = []; let route = 'none'; let items = 10; let lines = []; let current = null; let itemMode = false; let finaleSeen = false;
