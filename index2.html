@@ -239,19 +239,37 @@
         }
 
         function verifyAnswer() {
-            const input = document.getElementById("answer-input").value.trim();
-            const d = MASTER[current];
-            const okN = Array.isArray(d.answer) ? d.answer.includes(input) : (input === d.answer);
-            const okT = (input === d.trueAnswer);
-            
-            if(route === 'self' && !okN) return alert("不正解");
-            if(route === 'cross' && !okT) return alert("不正解");
-            if(route === 'none' && !okN && !okT) return alert("不正解");
+    const input = document.getElementById("answer-input").value.trim();
+    const d = MASTER[current];
 
-            document.getElementById("check-ans-btn").disabled = true;
-            document.getElementById("target-selection-area").style.display = "block";
-            renderTargetButtons(okN, okT);
+    // 補助関数：データが配列でも文字列でも、スペースを無視して判定する
+    const checkMatch = (userInput, dataValue) => {
+        if (!dataValue) return false;
+        if (Array.isArray(dataValue)) {
+            // 配列の中身をすべてトリミングして比較
+            return dataValue.some(val => val.toString().trim() === userInput);
         }
+        // 文字列として比較
+        return dataValue.toString().trim() === userInput;
+    };
+
+    const okN = checkMatch(input, d.answer);
+    const okT = checkMatch(input, d.trueAnswer);
+    
+    // ルート確定後のチェック
+    if(route === 'self' && !okN) return alert("不正解（通常ルート）");
+    if(route === 'cross' && !okT) return alert("不正解（真実の答えではありません）");
+    
+    // ルート未確定時（どちらか合っていればOK）
+    if(route === 'none' && !okN && !okT) return alert("不正解");
+
+    document.getElementById("check-ans-btn").disabled = true;
+    document.getElementById("target-selection-area").style.display = "block";
+    
+    // ボタンの描画
+    renderTargetButtons(okN, okT);
+}
+
 
         function renderTargetButtons(okN, okT) {
             const list = document.getElementById("target-list"); list.innerHTML = "";
