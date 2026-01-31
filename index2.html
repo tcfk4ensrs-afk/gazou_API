@@ -10,7 +10,6 @@
 
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
-        /* 隠しコマンド */
         .command-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #475569; box-sizing: border-box; }
         .command-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
         .command-section button { margin-top: 5px; padding: 8px; font-size: 0.8rem; background: #334155; color: white; border: none; border-radius: 5px; width: 100%; cursor: pointer; }
@@ -27,20 +26,19 @@
         .cell.complete { background: var(--theme); color: #000; border: none; box-shadow: 0 0 15px var(--theme); }
         .ans-label { font-size: 0.5rem; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.2); width: 100%; padding-top: 2px; }
 
-        /* 回答ヒントカード（ビンゴの下に表示） */
         #solution-deck { display: none; width: 95%; max-width: 400px; margin-top: 20px; }
         .solution-card { background: rgba(255,255,255,0.05); border-left: 4px solid var(--theme); margin-bottom: 8px; padding: 10px; border-radius: 8px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
 
-        /* グリッチアニメーション */
-        @keyframes glitch {
+        /* グリッチ演出用スタイル */
+        @keyframes glitch-anim {
             0% { transform: translate(0); filter: hue-rotate(0deg); }
-            20% { transform: translate(-5px, 5px); filter: invert(1); }
-            40% { transform: translate(5px, -5px); filter: hue-rotate(90deg); }
-            60% { transform: translate(-5px, -2px); filter: sepia(1); }
-            80% { transform: translate(2px, 2px); filter: invert(0.5); }
+            20% { transform: translate(-10px, 5px); filter: invert(1); }
+            40% { transform: translate(10px, -5px); filter: hue-rotate(180deg); }
+            60% { transform: translate(-5px, -10px); filter: brightness(2); }
+            80% { transform: translate(5px, 5px); filter: contrast(3); }
             100% { transform: translate(0); filter: hue-rotate(0deg); }
         }
-        .glitch-mode { animation: glitch 0.2s infinite; background: #ff0000 !important; }
+        .glitch-active { animation: glitch-anim 0.15s infinite !important; background: #f00 !important; color: #000 !important; }
 
         #clear-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #1e293b, #000); text-align: center; padding: 20px; box-sizing: border-box; }
         .clear-card { background: rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 30px; border: 2px solid gold; box-shadow: 0 0 50px rgba(212, 175, 55, 0.3); width: 90%; max-width: 400px; position: relative; z-index: 2100; }
@@ -77,7 +75,6 @@
     </div>
 
     <div class="bingo-grid" id="bingo-board"></div>
-
     <div id="solution-deck"></div>
 
     <a href="index.html" class="nav-link">タイトル画面へ戻る</a>
@@ -141,7 +138,7 @@
         const normalize = (v) => v ? v.toString().replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/[\u3041-\u3096]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60)).toLowerCase().trim() : "";
 
         function load() {
-            const saved = localStorage.getItem('bingo_grand_v10_save');
+            const saved = localStorage.getItem('bingo_grand_v11_save');
             if(saved) {
                 const d = JSON.parse(saved); MASTER = d.m; route = d.r; items = d.i; lines = d.l; finaleSeen = d.f || false;
             } else { MASTER = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
@@ -150,7 +147,7 @@
         }
 
         function save() { 
-            localStorage.setItem('bingo_grand_v10_save', JSON.stringify({ m: MASTER, r: route, i: items, l: lines, f: finaleSeen })); 
+            localStorage.setItem('bingo_grand_v11_save', JSON.stringify({ m: MASTER, r: route, i: items, l: lines, f: finaleSeen })); 
             if(MASTER.every(c => c.solved) && !finaleSeen) showFinale();
         }
 
@@ -210,10 +207,10 @@
             if (isCrossChoice && okT) {
                 if (route !== 'cross') {
                     route = 'cross';
-                    triggerGlitch(); // グリッチ演出
+                    triggerGlitch(); // グリッチ＆リセット演出
                 }
             } else if (isSelfChoice && okN) {
-                if (route === 'cross') return alert("警告：正規の解答は拒否されました。連鎖先を選択してください。");
+                if (route === 'cross') return alert("警告：正規解答は拒否されました。連鎖先を選択してください。");
                 if (route === 'none') route = 'self';
             } else { return alert("対象マスまたは解答が一致しません。"); }
 
@@ -223,11 +220,22 @@
         }
 
         function triggerGlitch() {
-            document.body.classList.add("glitch-mode");
+            document.body.classList.add("glitch-active");
+            
+            // 重要：ここでノーマル解答で開放したマスをリセット
+            MASTER.forEach(d => {
+                d.solved = false; 
+                d.riddleCleared = false;
+            });
+            lines = []; // ビンゴラインもリセット
+            items = 0;  // アイテムもリセット
+
             setTimeout(() => {
-                document.body.classList.remove("glitch-mode");
-                alert("【ERROR】\n不正な連鎖を確認。\nシステム・エンドロールを書き換えます。");
-            }, 1500);
+                document.body.classList.remove("glitch-active");
+                alert("【致命的なシステムエラー】\n連鎖の矛盾により、全マスの固定を解除します。\n真実の解答のみがこの歪みを正すことができます。");
+                render(); 
+                updateUI();
+            }, 1800);
         }
 
         function showFinale() {
@@ -239,7 +247,7 @@
 
             if(route === 'self') {
                 title.innerText = "NORMAL END";
-                msg.innerText = "クリア率80％\n「通常」の物語はここで終わりです。\nしかし、あなたはまだ何も知らない。";
+                msg.innerText = "クリア率80％\nビンゴの下に手がかりを表示しました。";
                 deck.style.display = "block";
                 deck.innerHTML = `<h3 style="color: gold; font-size: 0.8rem; border-bottom: 1px solid #444; margin-bottom: 10px;">COLLECTED HINTS</h3>`;
                 MASTER.forEach((d, i) => {
@@ -251,7 +259,7 @@
                 });
             } else {
                 title.innerHTML = "TRUE ENDING";
-                msg.innerText = "クリア率100％！！\n全ての連鎖が一本の線に繋がりました。\n真実の世界へようこそ。";
+                msg.innerText = "クリア率100％！！\n全ての連鎖を解き明かし、真実の答えに辿り着きました！";
                 deck.style.display = "none";
                 createConfetti();
             }
@@ -333,11 +341,11 @@
 
         function executeCommand() {
             const input = document.getElementById("command-input").value.trim();
-            if (input === "もうわからない") { items += 5; updateUI(); save(); alert("マスターキーを5個取得。"); }
+            if (input === "もうわからない") { items += 5; updateUI(); save(); alert("マスターキー5個取得。"); }
             else if (input === "もう限界") { limitMode = true; alert("回答表示モード。"); }
             document.getElementById("command-input").value = "";
         }
-        function showCheatAnswer(i) { alert(`マス${i+1} の答え: ${Array.isArray(MASTER[i].answer) ? MASTER[i].answer[0] : MASTER[i].answer}`); limitMode = false; }
+        function showCheatAnswer(i) { alert(`答: ${Array.isArray(MASTER[i].answer) ? MASTER[i].answer[0] : MASTER[i].answer}`); limitMode = false; }
 
         load();
     </script>
