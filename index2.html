@@ -10,13 +10,16 @@
 
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
-        /* 隠しコマンド用フォーム */
         .command-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #475569; box-sizing: border-box; }
         .command-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
         .command-section button { margin-top: 5px; padding: 8px; font-size: 0.8rem; background: #334155; color: white; border: none; border-radius: 5px; width: 100%; cursor: pointer; }
 
-        .item-inventory { width: 95%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid gold; box-sizing: border-box; }
+        .item-inventory { width: 95%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid gold; box-sizing: border-box; }
         .item-btn { background: linear-gradient(135deg, gold, #f39c12); color: black; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+
+        .reset-area { width: 95%; max-width: 400px; display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-soft-reset { flex: 1; background: rgba(255,255,255,0.05); color: #aaa; border: 1px solid #444; padding: 8px; font-size: 0.6rem; border-radius: 5px; cursor: pointer; }
+        .btn-hard-reset { flex: 1; background: none; color: #444; border: none; font-size: 0.6rem; cursor: pointer; }
 
         .bingo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
         .cell { aspect-ratio: 1/1; background: var(--glass); border: 2px solid var(--theme); border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.6rem; font-weight: bold; text-align: center; cursor: pointer; padding: 5px; box-sizing: border-box; color: var(--theme); transition: 0.3s; }
@@ -25,40 +28,24 @@
         .ans-label { font-size: 0.5rem; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.2); width: 100%; padding-top: 2px; }
 
         #clear-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #1e293b, #000); text-align: center; padding: 20px; box-sizing: border-box; }
-        .clear-card { background: rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 30px; border: 2px solid gold; box-shadow: 0 0 50px rgba(212, 175, 55, 0.3); width: 90%; max-width: 400px; position: relative; z-index: 2100; }
-        .gold-title { font-size: 2.5rem; font-weight: bold; background: linear-gradient(to bottom, #fff, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px gold); margin-bottom: 15px; }
+        .clear-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 30px; border: 2px solid gold; box-shadow: 0 0 50px rgba(212, 175, 55, 0.3); width: 95%; max-width: 400px; position: relative; z-index: 2100; max-height: 90vh; overflow-y: auto; }
+        .gold-title { font-size: 2.2rem; font-weight: bold; background: linear-gradient(to bottom, #fff, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px gold); margin-bottom: 10px; }
+        
+        #solution-deck { display: none; margin: 15px 0; text-align: left; height: 280px; overflow-y: auto; padding-right: 5px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+        .solution-card { background: rgba(255,255,255,0.05); border-left: 4px solid var(--theme); margin-bottom: 10px; padding: 10px; border-radius: 8px; font-size: 0.75rem; }
+
         .confetti { position: absolute; width: 10px; height: 10px; background: gold; animation: fall 3s linear infinite; }
         @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
 
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 15px; box-sizing: border-box; overflow-y: auto; }
         #view-container { width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 15px; overflow: hidden; margin: 10px 0; border: 2px solid #334155; position: relative; }
         video, canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
-        
-        #riddle-display-area { width: 100%; height: 350px; background: #111; border-radius: 10px; margin-bottom: 10px; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 1px solid #334155; }
+        #riddle-display-area { width: 100%; height: 300px; background: #111; border-radius: 10px; margin-bottom: 10px; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 1px solid #334155; }
         #riddle-image { max-width: 100%; max-height: 100%; object-fit: contain; }
 
         .action-btn { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
-        .btn-target { background: #1e293b; color: white; border: 1px solid #4facfe; font-size: 0.8rem; padding: 10px; margin-bottom: 5px; border-radius: 8px; width: 100%; }
-        .btn-target:active { background: #4facfe; color: black; }
-
-        /* タイトルへ戻るボタン用スタイル */
-        .nav-link { 
-            display: inline-block;
-            margin: 20px 0;
-            padding: 12px 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid #4facfe;
-            color: #4facfe;
-            text-decoration: none;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        .nav-link:hover {
-            background: #4facfe;
-            color: #0f172a;
-        }
+        .btn-target { background: #1e293b; color: white; border: 1px solid #4facfe; font-size: 0.8rem; padding: 10px; margin-bottom: 5px; border-radius: 8px; width: 100%; text-align: left; }
+        .nav-link { display: inline-block; margin: 20px 0; padding: 12px 30px; background: rgba(255, 255, 255, 0.05); border: 1px solid #4facfe; color: #4facfe; text-decoration: none; border-radius: 30px; font-size: 0.8rem; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -66,7 +53,7 @@
     <h2 style="margin: 10px 0;">BINGO MYSTERY AI</h2>
 
     <div class="command-section">
-        <input type="text" id="command-input" placeholder="メッセージを入力...">
+        <input type="text" id="command-input" placeholder="隠しコマンドを入力...">
         <button onclick="executeCommand()">送信</button>
     </div>
 
@@ -78,9 +65,12 @@
         <button id="use-item-btn" class="item-btn" onclick="toggleItemMode()">アイテムを使う</button>
     </div>
 
-    <div class="bingo-grid" id="bingo-board"></div>
+    <div class="reset-area">
+        <button class="btn-soft-reset" onclick="softReset()">回答のみリセット</button>
+        <button class="btn-hard-reset" onclick="resetGame()">完全リセット</button>
+    </div>
 
-    <button style="background:none; color:#444; border:none; font-size:0.6rem; margin-top: 20px;" onclick="resetGame()">進捗をリセットして最初から</button>
+    <div class="bingo-grid" id="bingo-board"></div>
     
     <a href="index.html" class="nav-link">タイトル画面へ戻る</a>
 
@@ -88,9 +78,11 @@
         <div id="confetti-container"></div>
         <div class="clear-card">
             <div id="clear-title" class="gold-title">FINISH</div>
-            <p id="clear-msg" style="line-height: 1.6; margin-bottom: 20px;"></p>
-            <div id="hint-box" style="display:none; color: gold; font-size: 0.8rem; border-top: 1px solid #444; padding-top: 15px; margin-bottom: 15px;"></div>
-            <button id="close-finale-btn" style="background:#fff; color:#000; padding:10px; border-radius:10px; width:100%; border:none;" onclick="closeFinale()">次へ</button>
+            <p id="clear-msg" style="line-height: 1.6; margin-bottom: 10px; font-size: 0.9rem; white-space: pre-wrap;"></p>
+            
+            <div id="solution-deck"></div>
+
+            <button id="close-finale-btn" style="background:#fff; color:#000; padding:12px; border-radius:10px; width:100%; border:none; font-weight:bold; cursor:pointer;" onclick="closeFinale()">次へ</button>
         </div>
     </div>
 
@@ -113,7 +105,7 @@
                 <button id="check-ans-btn" class="action-btn" style="background:#fbbf24; color:black;" onclick="verifyAnswer()">正解判定する</button>
                 
                 <div id="target-selection-area" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px;">
-                    <label id="selection-label" style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">空けるマスを選択してください：</label>
+                    <label id="selection-label" style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">開放するマスを選択してください：</label>
                     <div id="target-list"></div>
                 </div>
             </div>
@@ -145,8 +137,18 @@
         let MASTER = []; let route = 'none'; let items = 0; let lines = []; let current = null; 
         let itemMode = false; let finaleSeen = false; let limitMode = false;
 
+        // --- ユーティリティ: 判定を強化するための正規化 ---
+        const normalize = (val) => {
+            if (!val) return "";
+            return val.toString()
+                .replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+                .replace(/[\u3041-\u3096]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
+                .toLowerCase()
+                .trim();
+        };
+
         function load() {
-            const saved = localStorage.getItem('bingo_grand_v8_save');
+            const saved = localStorage.getItem('bingo_grand_v9_save');
             if(saved) {
                 const d = JSON.parse(saved); MASTER = d.m; route = d.r; items = d.i; lines = d.l; finaleSeen = d.f || false;
             } else { MASTER = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
@@ -155,7 +157,7 @@
         }
 
         function save() { 
-            localStorage.setItem('bingo_grand_v8_save', JSON.stringify({ m: MASTER, r: route, i: items, l: lines, f: finaleSeen })); 
+            localStorage.setItem('bingo_grand_v9_save', JSON.stringify({ m: MASTER, r: route, i: items, l: lines, f: finaleSeen })); 
             if(MASTER.every(c => c.solved) && !finaleSeen) showFinale();
         }
 
@@ -165,9 +167,8 @@
                 const cell = document.createElement("div"); cell.className = `cell col-${d.color}`;
                 if(d.identified) cell.classList.add("identified");
                 if(d.solved) cell.classList.add("complete");
-                let ans = (route === 'cross') ? d.trueAnswer : (Array.isArray(d.answer) ? d.answer[0] : d.answer);
+                let ans = (route === 'cross') ? (Array.isArray(d.trueAnswer) ? d.trueAnswer[0] : d.trueAnswer) : (Array.isArray(d.answer) ? d.answer[0] : d.answer);
                 cell.innerHTML = `<span>${d.target}</span>` + (d.riddleCleared ? `<div class="ans-label">答: ${ans}</div>` : "");
-                
                 cell.onclick = () => {
                     if (itemMode) { useItem(i); }
                     else if (limitMode) { showCheatAnswer(i); }
@@ -183,19 +184,128 @@
             b.innerText = itemMode ? "CANCEL" : "ITEM USE"; b.style.background = itemMode ? "#ef4444" : "";
         }
 
+        function verifyAnswer() {
+            const inputRaw = document.getElementById("answer-input").value;
+            const input = normalize(inputRaw);
+            const d = MASTER[current];
+
+            const check = (userInput, dataValue) => {
+                if (Array.isArray(dataValue)) {
+                    return dataValue.some(v => normalize(v) === userInput);
+                }
+                return normalize(dataValue) === userInput;
+            };
+
+            const okN = check(input, d.answer);
+            const okT = check(input, d.trueAnswer);
+            
+            if(route === 'cross' && !okT) return alert("不正解（真実の答えではありません）");
+            if(route === 'self' && !okN) return alert("不正解（通常ルート）");
+            if(route === 'none' && !okN && !okT) return alert("不正解");
+
+            document.getElementById("check-ans-btn").disabled = true;
+            document.getElementById("target-selection-area").style.display = "block";
+            renderTargetButtons(okN, okT);
+        }
+
+        function renderTargetButtons(okN, okT) {
+            const list = document.getElementById("target-list"); list.innerHTML = "";
+            MASTER.forEach((m, idx) => {
+                if(!m.solved && m.identified) {
+                    const btn = document.createElement("button"); btn.className = "btn-target";
+                    btn.innerText = `マス${idx+1}: ${m.target}`;
+                    btn.onclick = () => finalize(idx, okN, okT);
+                    list.appendChild(btn);
+                }
+            });
+            if(list.innerHTML === "") document.getElementById("selection-label").innerText = "開放されている空きマスがありません。";
+        }
+
+        function finalize(targetIdx, okN, okT) {
+            const currentCell = MASTER[current];
+            const isSelfChoice = (targetIdx === current);
+            const isCrossChoice = (targetIdx === currentCell.clearsId);
+
+            // Trueルート移行判定（どのタイミングでもOK）
+            if (isCrossChoice && okT) {
+                if (route !== 'cross') {
+                    route = 'cross';
+                    alert("【SYSTEM WARNING】\n真実の連鎖（TRUE ROUTE）への書き換えを検知しました。");
+                }
+            } else if (isSelfChoice && okN) {
+                if (route === 'cross') return alert("その答えは「真実」ではありません。連鎖先を選択してください。");
+                if (route === 'none') route = 'self';
+            } else {
+                return alert("対象マスまたは解答が一致しません。");
+            }
+
+            alert("正解！マスが開放されました。");
+            MASTER[current].riddleCleared = true; 
+            MASTER[targetIdx].solved = true;
+            save(); checkBingo(); closeModal(); render();
+        }
+
+        function showFinale() {
+            const overlay = document.getElementById("clear-overlay");
+            const title = document.getElementById("clear-title");
+            const msg = document.getElementById("clear-msg");
+            const deck = document.getElementById("solution-deck");
+            overlay.style.display = "flex";
+
+            if(route === 'self') {
+                title.innerText = "NORMAL END";
+                msg.innerText = "クリア率80％\nまだ解明されていない「連鎖」があるようです。";
+                
+                // カード表示
+                deck.style.display = "block";
+                deck.innerHTML = "";
+                MASTER.forEach((d, i) => {
+                    const nA = Array.isArray(d.answer) ? d.answer[0] : d.answer;
+                    const tA = Array.isArray(d.trueAnswer) ? d.trueAnswer[0] : d.trueAnswer;
+                    const card = document.createElement("div");
+                    card.className = `solution-card col-${d.color}`;
+                    card.innerHTML = `
+                        <div style="color:var(--theme); font-weight:bold; margin-bottom:5px;">No.${i+1}: ${d.target}</div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>通常: <b style="color:#fff;">${nA}</b></span>
+                            <span>真実: <b style="color:gold;">${tA}</b></span>
+                        </div>
+                        <div style="font-size:0.6rem; color:#888; margin-top:5px;">連鎖先 → マス ${d.clearsId + 1}</div>
+                    `;
+                    deck.appendChild(card);
+                });
+            } else {
+                title.innerHTML = "TRUE ENDING";
+                msg.innerText = "クリア率100％！！\n全ての連鎖を解き明かし、真実の答えに辿り着きました！";
+                deck.style.display = "none";
+                createConfetti();
+            }
+        }
+
+        function softReset() {
+            if(confirm("写真（開放状態）は残したまま、回答のみリセットしますか？")) {
+                MASTER.forEach(d => { d.solved = false; d.riddleCleared = false; });
+                route = 'none'; items = 0; lines = []; finaleSeen = false;
+                save(); location.reload();
+            }
+        }
+
+        function resetGame() { if(confirm("完全に消去して最初からやり直しますか？")) { localStorage.clear(); location.reload(); } }
+
+        // --- 既存の基本機能 ---
         function executeCommand() {
             const input = document.getElementById("command-input").value.trim();
             if (input === "もうわからない") {
                 items += 5; updateUI(); save(); alert("マスターキーを5個取得しました。");
             } else if (input === "もう限界") {
-                limitMode = true; alert("回答表示モードになりました。マスを選択してください。");
+                limitMode = true; alert("回答表示モード。マスを選択してください。");
             }
             document.getElementById("command-input").value = "";
         }
 
         function showCheatAnswer(i) {
             const ans = Array.isArray(MASTER[i].answer) ? MASTER[i].answer[0] : MASTER[i].answer;
-            alert(`マス${i+1} (${MASTER[i].target}) の答え: ${ans}`);
+            alert(`マス${i+1} の答え: ${ans}`);
             limitMode = false;
         }
 
@@ -238,71 +348,6 @@
             } catch (e) { alert("AI Error"); v.style.display = "block"; c.style.display = "none"; }
         }
 
-        function verifyAnswer() {
-    const input = document.getElementById("answer-input").value.trim();
-    const d = MASTER[current];
-
-    // 補助関数：データが配列でも文字列でも、スペースを無視して判定する
-    const checkMatch = (userInput, dataValue) => {
-        if (!dataValue) return false;
-        if (Array.isArray(dataValue)) {
-            // 配列の中身をすべてトリミングして比較
-            return dataValue.some(val => val.toString().trim() === userInput);
-        }
-        // 文字列として比較
-        return dataValue.toString().trim() === userInput;
-    };
-
-    const okN = checkMatch(input, d.answer);
-    const okT = checkMatch(input, d.trueAnswer);
-    
-    // ルート確定後のチェック
-    if(route === 'self' && !okN) return alert("不正解（通常ルート）");
-    if(route === 'cross' && !okT) return alert("不正解（真実の答えではありません）");
-    
-    // ルート未確定時（どちらか合っていればOK）
-    if(route === 'none' && !okN && !okT) return alert("不正解");
-
-    document.getElementById("check-ans-btn").disabled = true;
-    document.getElementById("target-selection-area").style.display = "block";
-    
-    // ボタンの描画
-    renderTargetButtons(okN, okT);
-}
-
-
-        function renderTargetButtons(okN, okT) {
-            const list = document.getElementById("target-list"); list.innerHTML = "";
-            MASTER.forEach((m, idx) => {
-                if(!m.solved && m.identified) {
-                    const btn = document.createElement("button"); btn.className = "btn-target";
-                    btn.innerText = `マス${idx+1}: ${m.target}`;
-                    btn.onclick = () => finalize(idx, okN, okT);
-                    list.appendChild(btn);
-                }
-            });
-            if(list.innerHTML === "") document.getElementById("selection-label").innerText = "開放されている空きマスがありません。";
-        }
-
-        function finalize(targetIdx, okN, okT) {
-            const currentCell = MASTER[current];
-            const isSelfChoice = (targetIdx === current);
-            const isCrossChoice = (targetIdx === currentCell.clearsId);
-
-            if(route === 'self' && !isSelfChoice) return alert("対象マスではないです。");
-            if(route === 'cross' && !isCrossChoice) return alert("対象マスではないです。");
-            
-            if(route === 'none') {
-                if(isSelfChoice && okN) { route = 'self'; } 
-                else if(isCrossChoice && okT) { route = 'cross'; alert("【真エンドルート確定】"); } 
-                else { return alert("対象マスまたは解答が一致しません。"); }
-            }
-
-            alert("正解！マスが空きました。");
-            MASTER[current].riddleCleared = true; MASTER[targetIdx].solved = true;
-            save(); checkBingo(); closeModal(); render();
-        }
-
         function checkBingo() {
             const p = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
             let hit = false;
@@ -310,24 +355,9 @@
             if(hit) { document.getElementById("bingo-overlay").style.display = "flex"; setTimeout(()=>document.getElementById("bingo-overlay").style.display="none", 2500); updateUI(); }
         }
 
-        function showFinale() {
-            const overlay = document.getElementById("clear-overlay");
-            const title = document.getElementById("clear-title");
-            const msg = document.getElementById("clear-msg");
-            const hint = document.getElementById("hint-box");
-            overlay.style.display = "flex";
-            if(route === 'self') {
-                title.innerText = "NORMAL END"; msg.innerText = "クリア率80％";
-                hint.style.display = "block"; hint.innerText = "何か違和感はない？一部の問題がすり替えられていて順番もバラバラだったみたい";
-            } else {
-                title.innerHTML = "TRUE ENDING"; msg.innerText = "クリア率100％！！連鎖の謎を解き明かし、真実の答えに辿り着きました！";
-                createConfetti();
-            }
-        }
-
         function closeFinale() {
             if(route === 'self') {
-                MASTER.forEach(d => { d.identified = true; d.solved = false; d.riddleCleared = false; });
+                MASTER.forEach(d => { d.solved = false; d.riddleCleared = false; });
                 route = 'none'; items = 0; lines = []; finaleSeen = false;
             } else { finaleSeen = true; }
             save(); document.getElementById("clear-overlay").style.display = "none"; render();
@@ -348,8 +378,6 @@
             document.getElementById("riddle-image").src = "";
             document.getElementById("modal").style.display = "none"; render();
         }
-
-        function resetGame() { if(confirm("完全に消去して最初からやり直しますか？")) { localStorage.clear(); location.reload(); } }
 
         load();
     </script>
