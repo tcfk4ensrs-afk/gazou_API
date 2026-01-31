@@ -10,6 +10,7 @@
 
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         
+        /* 隠しコマンド */
         .command-section { width: 95%; max-width: 400px; background: var(--glass); padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #475569; box-sizing: border-box; }
         .command-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #000; color: #fff; box-sizing: border-box; }
         .command-section button { margin-top: 5px; padding: 8px; font-size: 0.8rem; background: #334155; color: white; border: none; border-radius: 5px; width: 100%; cursor: pointer; }
@@ -19,7 +20,6 @@
 
         .reset-area { width: 95%; max-width: 400px; display: flex; gap: 10px; margin-bottom: 15px; }
         .btn-soft-reset { flex: 1; background: rgba(255,255,255,0.05); color: #aaa; border: 1px solid #444; padding: 8px; font-size: 0.6rem; border-radius: 5px; cursor: pointer; }
-        .btn-hard-reset { flex: 1; background: none; color: #444; border: none; font-size: 0.6rem; cursor: pointer; }
 
         .bingo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
         .cell { aspect-ratio: 1/1; background: var(--glass); border: 2px solid var(--theme); border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.6rem; font-weight: bold; text-align: center; cursor: pointer; padding: 5px; box-sizing: border-box; color: var(--theme); transition: 0.3s; }
@@ -27,22 +27,28 @@
         .cell.complete { background: var(--theme); color: #000; border: none; box-shadow: 0 0 15px var(--theme); }
         .ans-label { font-size: 0.5rem; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.2); width: 100%; padding-top: 2px; }
 
-        #clear-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #1e293b, #000); text-align: center; padding: 20px; box-sizing: border-box; }
-        .clear-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 30px; border: 2px solid gold; box-shadow: 0 0 50px rgba(212, 175, 55, 0.3); width: 95%; max-width: 400px; position: relative; z-index: 2100; max-height: 90vh; overflow-y: auto; }
-        .gold-title { font-size: 2.2rem; font-weight: bold; background: linear-gradient(to bottom, #fff, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px gold); margin-bottom: 10px; }
-        
-        #solution-deck { display: none; margin: 15px 0; text-align: left; height: 280px; overflow-y: auto; padding-right: 5px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
-        .solution-card { background: rgba(255,255,255,0.05); border-left: 4px solid var(--theme); margin-bottom: 10px; padding: 10px; border-radius: 8px; font-size: 0.75rem; }
+        /* 回答ヒントカード（ビンゴの下に表示） */
+        #solution-deck { display: none; width: 95%; max-width: 400px; margin-top: 20px; }
+        .solution-card { background: rgba(255,255,255,0.05); border-left: 4px solid var(--theme); margin-bottom: 8px; padding: 10px; border-radius: 8px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
 
-        .confetti { position: absolute; width: 10px; height: 10px; background: gold; animation: fall 3s linear infinite; }
-        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+        /* グリッチアニメーション */
+        @keyframes glitch {
+            0% { transform: translate(0); filter: hue-rotate(0deg); }
+            20% { transform: translate(-5px, 5px); filter: invert(1); }
+            40% { transform: translate(5px, -5px); filter: hue-rotate(90deg); }
+            60% { transform: translate(-5px, -2px); filter: sepia(1); }
+            80% { transform: translate(2px, 2px); filter: invert(0.5); }
+            100% { transform: translate(0); filter: hue-rotate(0deg); }
+        }
+        .glitch-mode { animation: glitch 0.2s infinite; background: #ff0000 !important; }
+
+        #clear-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #1e293b, #000); text-align: center; padding: 20px; box-sizing: border-box; }
+        .clear-card { background: rgba(255,255,255,0.05); padding: 30px 20px; border-radius: 30px; border: 2px solid gold; box-shadow: 0 0 50px rgba(212, 175, 55, 0.3); width: 90%; max-width: 400px; position: relative; z-index: 2100; }
+        .gold-title { font-size: 2.5rem; font-weight: bold; background: linear-gradient(to bottom, #fff, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px gold); margin-bottom: 15px; }
 
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 15px; box-sizing: border-box; overflow-y: auto; }
         #view-container { width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 15px; overflow: hidden; margin: 10px 0; border: 2px solid #334155; position: relative; }
         video, canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
-        #riddle-display-area { width: 100%; height: 300px; background: #111; border-radius: 10px; margin-bottom: 10px; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 1px solid #334155; }
-        #riddle-image { max-width: 100%; max-height: 100%; object-fit: contain; }
-
         .action-btn { border: none; border-radius: 10px; padding: 14px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
         .btn-target { background: #1e293b; color: white; border: 1px solid #4facfe; font-size: 0.8rem; padding: 10px; margin-bottom: 5px; border-radius: 8px; width: 100%; text-align: left; }
         .nav-link { display: inline-block; margin: 20px 0; padding: 12px 30px; background: rgba(255, 255, 255, 0.05); border: 1px solid #4facfe; color: #4facfe; text-decoration: none; border-radius: 30px; font-size: 0.8rem; font-weight: bold; }
@@ -53,7 +59,7 @@
     <h2 style="margin: 10px 0;">BINGO MYSTERY AI</h2>
 
     <div class="command-section">
-        <input type="text" id="command-input" placeholder="隠しコマンドを入力...">
+        <input type="text" id="command-input" placeholder="メッセージを入力...">
         <button onclick="executeCommand()">送信</button>
     </div>
 
@@ -67,22 +73,21 @@
 
     <div class="reset-area">
         <button class="btn-soft-reset" onclick="softReset()">回答のみリセット</button>
-        <button class="btn-hard-reset" onclick="resetGame()">完全リセット</button>
+        <button style="background:none; color:#444; border:none; font-size:0.6rem;" onclick="resetGame()">完全リセット</button>
     </div>
 
     <div class="bingo-grid" id="bingo-board"></div>
-    
+
+    <div id="solution-deck"></div>
+
     <a href="index.html" class="nav-link">タイトル画面へ戻る</a>
 
     <div id="clear-overlay">
         <div id="confetti-container"></div>
         <div class="clear-card">
             <div id="clear-title" class="gold-title">FINISH</div>
-            <p id="clear-msg" style="line-height: 1.6; margin-bottom: 10px; font-size: 0.9rem; white-space: pre-wrap;"></p>
-            
-            <div id="solution-deck"></div>
-
-            <button id="close-finale-btn" style="background:#fff; color:#000; padding:12px; border-radius:10px; width:100%; border:none; font-weight:bold; cursor:pointer;" onclick="closeFinale()">次へ</button>
+            <p id="clear-msg" style="line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap;"></p>
+            <button id="close-finale-btn" style="background:#fff; color:#000; padding:10px; border-radius:10px; width:100%; border:none; font-weight:bold;" onclick="closeFinale()">次へ</button>
         </div>
     </div>
 
@@ -93,23 +98,19 @@
     <div id="modal">
         <div class="modal-content" style="max-width: 400px; margin: auto;">
             <h2 id="modal-title" style="color:#4facfe; margin:0 0 10px 0;">TARGET</h2>
-            
             <div id="capture-section">
                 <div id="view-container"><video id="video" autoplay playsinline></video><canvas id="canvas"></canvas></div>
                 <button class="action-btn" style="background:#4facfe; color:white;" onclick="analyzeSpot()">📸 撮影して「開放」する</button>
             </div>
-
             <div id="riddle-section" style="display:none;" class="input-group">
-                <div id="riddle-display-area"><img id="riddle-image" src="" alt="Riddle"></div>
+                <div id="riddle-display-area" style="width:100%; height:300px; background:#111; border-radius:10px; margin-bottom:10px; display:flex; justify-content:center; align-items:center; border:1px solid #334155;"><img id="riddle-image" src="" style="max-width:100%; max-height:100%; object-fit:contain;"></div>
                 <input type="text" id="answer-input" style="width:100%; padding:12px; border-radius:8px; background:#1e293b; color:white; border:1px solid #475569; box-sizing:border-box;" placeholder="答えを入力">
                 <button id="check-ans-btn" class="action-btn" style="background:#fbbf24; color:black;" onclick="verifyAnswer()">正解判定する</button>
-                
                 <div id="target-selection-area" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px;">
-                    <label id="selection-label" style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">開放するマスを選択してください：</label>
+                    <label id="selection-label" style="display:block; font-size:0.8rem; color:#4facfe; margin-bottom:10px;">開放するマスを選択：</label>
                     <div id="target-list"></div>
                 </div>
             </div>
-            
             <button class="action-btn" style="background:#334155; color:white;" onclick="closeModal()">戻る</button>
         </div>
     </div>
@@ -137,18 +138,10 @@
         let MASTER = []; let route = 'none'; let items = 0; let lines = []; let current = null; 
         let itemMode = false; let finaleSeen = false; let limitMode = false;
 
-        // --- ユーティリティ: 判定を強化するための正規化 ---
-        const normalize = (val) => {
-            if (!val) return "";
-            return val.toString()
-                .replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
-                .replace(/[\u3041-\u3096]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
-                .toLowerCase()
-                .trim();
-        };
+        const normalize = (v) => v ? v.toString().replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/[\u3041-\u3096]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60)).toLowerCase().trim() : "";
 
         function load() {
-            const saved = localStorage.getItem('bingo_grand_v9_save');
+            const saved = localStorage.getItem('bingo_grand_v10_save');
             if(saved) {
                 const d = JSON.parse(saved); MASTER = d.m; route = d.r; items = d.i; lines = d.l; finaleSeen = d.f || false;
             } else { MASTER = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
@@ -157,7 +150,7 @@
         }
 
         function save() { 
-            localStorage.setItem('bingo_grand_v9_save', JSON.stringify({ m: MASTER, r: route, i: items, l: lines, f: finaleSeen })); 
+            localStorage.setItem('bingo_grand_v10_save', JSON.stringify({ m: MASTER, r: route, i: items, l: lines, f: finaleSeen })); 
             if(MASTER.every(c => c.solved) && !finaleSeen) showFinale();
         }
 
@@ -169,11 +162,7 @@
                 if(d.solved) cell.classList.add("complete");
                 let ans = (route === 'cross') ? (Array.isArray(d.trueAnswer) ? d.trueAnswer[0] : d.trueAnswer) : (Array.isArray(d.answer) ? d.answer[0] : d.answer);
                 cell.innerHTML = `<span>${d.target}</span>` + (d.riddleCleared ? `<div class="ans-label">答: ${ans}</div>` : "");
-                cell.onclick = () => {
-                    if (itemMode) { useItem(i); }
-                    else if (limitMode) { showCheatAnswer(i); }
-                    else { openModal(i); }
-                };
+                cell.onclick = () => itemMode ? useItem(i) : (limitMode ? showCheatAnswer(i) : openModal(i));
                 board.appendChild(cell);
             });
         }
@@ -185,16 +174,9 @@
         }
 
         function verifyAnswer() {
-            const inputRaw = document.getElementById("answer-input").value;
-            const input = normalize(inputRaw);
+            const input = normalize(document.getElementById("answer-input").value);
             const d = MASTER[current];
-
-            const check = (userInput, dataValue) => {
-                if (Array.isArray(dataValue)) {
-                    return dataValue.some(v => normalize(v) === userInput);
-                }
-                return normalize(dataValue) === userInput;
-            };
+            const check = (userInput, dataValue) => Array.isArray(dataValue) ? dataValue.some(v => normalize(v) === userInput) : normalize(dataValue) === userInput;
 
             const okN = check(input, d.answer);
             const okT = check(input, d.trueAnswer);
@@ -218,7 +200,6 @@
                     list.appendChild(btn);
                 }
             });
-            if(list.innerHTML === "") document.getElementById("selection-label").innerText = "開放されている空きマスがありません。";
         }
 
         function finalize(targetIdx, okN, okT) {
@@ -226,23 +207,27 @@
             const isSelfChoice = (targetIdx === current);
             const isCrossChoice = (targetIdx === currentCell.clearsId);
 
-            // Trueルート移行判定（どのタイミングでもOK）
             if (isCrossChoice && okT) {
                 if (route !== 'cross') {
                     route = 'cross';
-                    alert("【SYSTEM WARNING】\n真実の連鎖（TRUE ROUTE）への書き換えを検知しました。");
+                    triggerGlitch(); // グリッチ演出
                 }
             } else if (isSelfChoice && okN) {
-                if (route === 'cross') return alert("その答えは「真実」ではありません。連鎖先を選択してください。");
+                if (route === 'cross') return alert("警告：正規の解答は拒否されました。連鎖先を選択してください。");
                 if (route === 'none') route = 'self';
-            } else {
-                return alert("対象マスまたは解答が一致しません。");
-            }
+            } else { return alert("対象マスまたは解答が一致しません。"); }
 
-            alert("正解！マスが開放されました。");
-            MASTER[current].riddleCleared = true; 
-            MASTER[targetIdx].solved = true;
+            alert("ACCESS GRANTED");
+            MASTER[current].riddleCleared = true; MASTER[targetIdx].solved = true;
             save(); checkBingo(); closeModal(); render();
+        }
+
+        function triggerGlitch() {
+            document.body.classList.add("glitch-mode");
+            setTimeout(() => {
+                document.body.classList.remove("glitch-mode");
+                alert("【ERROR】\n不正な連鎖を確認。\nシステム・エンドロールを書き換えます。");
+            }, 1500);
         }
 
         function showFinale() {
@@ -254,63 +239,36 @@
 
             if(route === 'self') {
                 title.innerText = "NORMAL END";
-                msg.innerText = "クリア率80％\nまだ解明されていない「連鎖」があるようです。";
-                
-                // カード表示
+                msg.innerText = "クリア率80％\n「通常」の物語はここで終わりです。\nしかし、あなたはまだ何も知らない。";
                 deck.style.display = "block";
-                deck.innerHTML = "";
+                deck.innerHTML = `<h3 style="color: gold; font-size: 0.8rem; border-bottom: 1px solid #444; margin-bottom: 10px;">COLLECTED HINTS</h3>`;
                 MASTER.forEach((d, i) => {
                     const nA = Array.isArray(d.answer) ? d.answer[0] : d.answer;
-                    const tA = Array.isArray(d.trueAnswer) ? d.trueAnswer[0] : d.trueAnswer;
                     const card = document.createElement("div");
                     card.className = `solution-card col-${d.color}`;
-                    card.innerHTML = `
-                        <div style="color:var(--theme); font-weight:bold; margin-bottom:5px;">No.${i+1}: ${d.target}</div>
-                        <div style="display:flex; justify-content:space-between;">
-                            <span>通常: <b style="color:#fff;">${nA}</b></span>
-                            <span>真実: <b style="color:gold;">${tA}</b></span>
-                        </div>
-                        <div style="font-size:0.6rem; color:#888; margin-top:5px;">連鎖先 → マス ${d.clearsId + 1}</div>
-                    `;
+                    card.innerHTML = `<span style="color:var(--theme); font-weight:bold;">No.${i+1}: ${d.target}</span><span style="color:#fff;">答: ${nA}</span>`;
                     deck.appendChild(card);
                 });
             } else {
                 title.innerHTML = "TRUE ENDING";
-                msg.innerText = "クリア率100％！！\n全ての連鎖を解き明かし、真実の答えに辿り着きました！";
+                msg.innerText = "クリア率100％！！\n全ての連鎖が一本の線に繋がりました。\n真実の世界へようこそ。";
                 deck.style.display = "none";
                 createConfetti();
             }
         }
 
         function softReset() {
-            if(confirm("写真（開放状態）は残したまま、回答のみリセットしますか？")) {
+            if(confirm("撮影データ（開放状態）を維持したまま回答のみリセットします。よろしいですか？")) {
                 MASTER.forEach(d => { d.solved = false; d.riddleCleared = false; });
                 route = 'none'; items = 0; lines = []; finaleSeen = false;
+                document.getElementById("solution-deck").style.display = "none";
                 save(); location.reload();
             }
         }
 
-        function resetGame() { if(confirm("完全に消去して最初からやり直しますか？")) { localStorage.clear(); location.reload(); } }
+        function resetGame() { if(confirm("全データを削除して初期化しますか？")) { localStorage.clear(); location.reload(); } }
 
-        // --- 既存の基本機能 ---
-        function executeCommand() {
-            const input = document.getElementById("command-input").value.trim();
-            if (input === "もうわからない") {
-                items += 5; updateUI(); save(); alert("マスターキーを5個取得しました。");
-            } else if (input === "もう限界") {
-                limitMode = true; alert("回答表示モード。マスを選択してください。");
-            }
-            document.getElementById("command-input").value = "";
-        }
-
-        function showCheatAnswer(i) {
-            const ans = Array.isArray(MASTER[i].answer) ? MASTER[i].answer[0] : MASTER[i].answer;
-            alert(`マス${i+1} の答え: ${ans}`);
-            limitMode = false;
-        }
-
-        function toggleItemMode() { itemMode = !itemMode; limitMode = false; updateUI(); }
-
+        function toggleItemMode() { itemMode = !itemMode; updateUI(); }
         function useItem(i) {
             if(MASTER[i].identified || MASTER[i].solved) return;
             items--; MASTER[i].identified = true; itemMode = false; save(); updateUI(); render(); openModal(i);
@@ -320,22 +278,18 @@
             current = i; const d = MASTER[i];
             document.getElementById("modal-title").innerText = d.target; document.getElementById("modal").style.display = "block";
             document.getElementById("target-selection-area").style.display = "none"; document.getElementById("check-ans-btn").disabled = false;
-            document.getElementById("answer-input").value = "";
-
             if(d.identified) {
                 document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
                 document.getElementById("riddle-image").src = d.riddle;
             } else {
                 document.getElementById("capture-section").style.display = "block"; document.getElementById("riddle-section").style.display = "none";
-                document.getElementById("video").style.display = "block"; document.getElementById("canvas").style.display = "none";
-                try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); document.getElementById("video").srcObject = s; } catch(e) { alert("Camera Error"); }
+                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); document.getElementById("video").srcObject = s;
             }
         }
 
         async function analyzeSpot() {
             const v = document.getElementById("video"); const c = document.getElementById("canvas");
             c.width = v.videoWidth; c.height = v.videoHeight; c.getContext("2d").drawImage(v, 0, 0);
-            v.style.display = "none"; c.style.display = "block";
             const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
             try {
                 const response = await fetch('/.netlify/functions/analyze', { method: 'POST', body: JSON.stringify({ target: MASTER[current].target, image: imgData }) });
@@ -344,8 +298,8 @@
                     MASTER[current].identified = true; save();
                     document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
                     document.getElementById("riddle-image").src = MASTER[current].riddle;
-                } else { v.style.display = "block"; c.style.display = "none"; alert("判定失敗: 対象が見つかりません"); }
-            } catch (e) { alert("AI Error"); v.style.display = "block"; c.style.display = "none"; }
+                } else { alert("判定失敗"); }
+            } catch (e) { alert("AI Error"); }
         }
 
         function checkBingo() {
@@ -368,16 +322,22 @@
             for(let i=0; i<60; i++) {
                 const c = document.createElement("div"); c.className = "confetti";
                 c.style.left = Math.random() * 100 + "vw"; c.style.animationDelay = Math.random() * 3 + "s";
-                c.style.backgroundColor = ["#ffd700", "#ffffff", "#ffcc00"][Math.floor(Math.random()*3)];
                 container.appendChild(c);
             }
         }
 
         function closeModal() {
             const v = document.getElementById("video"); if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop());
-            document.getElementById("riddle-image").src = "";
             document.getElementById("modal").style.display = "none"; render();
         }
+
+        function executeCommand() {
+            const input = document.getElementById("command-input").value.trim();
+            if (input === "もうわからない") { items += 5; updateUI(); save(); alert("マスターキーを5個取得。"); }
+            else if (input === "もう限界") { limitMode = true; alert("回答表示モード。"); }
+            document.getElementById("command-input").value = "";
+        }
+        function showCheatAnswer(i) { alert(`マス${i+1} の答え: ${Array.isArray(MASTER[i].answer) ? MASTER[i].answer[0] : MASTER[i].answer}`); limitMode = false; }
 
         load();
     </script>
