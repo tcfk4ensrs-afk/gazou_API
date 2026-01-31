@@ -125,11 +125,11 @@
             { id: 8, color: 'yellow', target: "ローソン", riddle: "images/9.png", answer: "すやき", trueAnswer: "すやき", identified: false, solved: false, riddleCleared: false, clearsId: 2 },
             { id: 9, color: 'green', target: "UNIQLO", riddle: "images/10.png", answer: ["紫","むらさき"], trueAnswer: ["紫","むらさき"], identified: false, solved: false, riddleCleared: false, clearsId: 12 },
             { id: 10, color: 'green', target: "マツモトキヨシ", riddle: "images/11.png", answer: "マツキヨ", trueAnswer: ["黄色","黄"], identified: false, solved: false, riddleCleared: false, clearsId: 10 },
-            { id: 11, color: 'red', target: "丸亀製麺", riddle: "images/12.png", answer: ["marugame","丸亀","まるがめ"], trueAnswer: "香川", identified: false, solved: false, riddleCleared: false, clearsId: 11 },
+            { id: 11, color: 'red', target: "丸亀製麺", riddle: "images/12.png", answer: ["marugame","丸亀","まるがめ"], trueAnswer: ["東京","東京都","渋谷"], identified: false, solved: false, riddleCleared: false, clearsId: 11 },
             { id: 12, color: 'green', target: "イオン", riddle: "images/13.png", answer: "緑", trueAnswer: "緑", identified: false, solved: false, riddleCleared: false, clearsId: 3 },
             { id: 13, color: 'blue', target: "ミスタードーナツ", riddle: "images/14.png", answer: ["パンダ","PANDA","panda"], trueAnswer: ["パンダ","PANDA","panda"], identified: false, solved: false, riddleCleared: false, clearsId: 0 },
             { id: 14, color: 'blue', target: "たからくじ", riddle: "images/15.png", answer: ["たからくじ","宝くじ"], trueAnswer: "くじら", identified: false, solved: false, riddleCleared: false, clearsId: 14 },
-            { id: 15, color: 'yellow', target: "コクヨ", riddle: "images/16.png", answer: "コクヨ", trueAnswer: "予告", identified: false, solved: false, riddleCleared: false, clearsId: 15 }
+            { id: 15, color: 'yellow', target: "コクヨ", riddle: "images/16.png", answer: "コクヨ", trueAnswer: ["予告","ヨコク","よこく"], identified: false, solved: false, riddleCleared: false, clearsId: 15 }
         ];
 
         let MASTER = []; let route = 'none'; let items = 0; let lines = []; let current = null; 
@@ -247,7 +247,7 @@
 
             if(route === 'self') {
                 title.innerText = "NORMAL END";
-                msg.innerText = "クリア率80％\nビンゴの下に手がかりを表示しました。";
+                msg.innerText = "クリア率80％/nビンゴの下に手がかりを表示しました。/n問題の答えがすべて入れ替わって/nいくつかの問題については問題ごとすり替わっているみたいです。";
                 deck.style.display = "block";
                 deck.innerHTML = `<h3 style="color: gold; font-size: 0.8rem; border-bottom: 1px solid #444; margin-bottom: 10px;">COLLECTED HINTS</h3>`;
                 MASTER.forEach((d, i) => {
