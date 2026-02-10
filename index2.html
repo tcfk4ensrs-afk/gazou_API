@@ -214,7 +214,7 @@
                 if (route === 'none') route = 'self';
             } else { return alert("対象マスまたは解答が一致しません。"); }
 
-            alert("ACCESS GRANTED");
+            alert("マスが空きました！");
             MASTER[current].riddleCleared = true; MASTER[targetIdx].solved = true;
             save(); checkBingo(); closeModal(); render();
         }
