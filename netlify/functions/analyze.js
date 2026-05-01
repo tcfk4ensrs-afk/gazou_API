@@ -14,19 +14,18 @@ exports.handler = async (event) => {
             return { statusCode: 500, body: JSON.stringify({ error: "Server configuration error" }) };
         }
 
-        // Gemini API へのリクエスト
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{
                     parts: [
-                        { text: `この画像の中に「${target}」という店舗やロゴ、施設がはっきりと写っているか判定してください。
+                        { text: `この画像に何が写っているか15文字程度で説明し、その後に続けて、対象物「${target}」が写っていると判断できるなら "YES"、そうでないなら "NO" と出力してください。
                                 
-                                返答は必ず以下の形式（JSON）で返してください。
+                                返答は必ず以下のJSON形式で返してください。
                                 {
-                                  "result": "YES" または "NO",
-                                  "analysis": "判定理由を日本語で1文程度。何が見えるか、なぜ失敗したかを具体的に書いてください"
+                                  "analysis": "[画像の説明文をここに書く]",
+                                  "result": "[YES または NO]"
                                 }` 
                         },
                         {
@@ -37,7 +36,6 @@ exports.handler = async (event) => {
                         }
                     ]
                 }],
-                // JSON形式で返答を強制するための設定
                 generationConfig: {
                     responseMimeType: "application/json"
                 }
@@ -47,22 +45,25 @@ exports.handler = async (event) => {
         const data = await response.json();
 
         if (data.error) {
-            console.error("Gemini API Error Details:", JSON.stringify(data.error, null, 2));
-            return {
-                statusCode: 500,
-                body: JSON.stringify({ error: data.error.message })
-            };
+            console.error("Gemini API Error:", data.error.message);
+            return { statusCode: 500, body: JSON.stringify({ error: data.error.message }) };
         }
         
-        // GeminiからのJSON回答をパースする
+        // AIの返答をパース
         const resultJsonString = data.candidates?.[0]?.content?.parts?.[0]?.text || '{"result":"NO","analysis":"AIが応答しませんでした。"}';
         const parsedResult = JSON.parse(resultJsonString);
+
+        // ★ ここがポイント：AIがNOと言っても、説明文(analysis)の中に店名(target)があれば救済してYESにする
+        let finalResult = parsedResult.result.toUpperCase();
+        if (finalResult === "NO" && parsedResult.analysis.includes(target)) {
+            finalResult = "YES";
+        }
 
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
-                result: parsedResult.result, 
+                result: finalResult, 
                 analysis: parsedResult.analysis 
             })
         };
@@ -71,7 +72,7 @@ exports.handler = async (event) => {
         console.error("Internal Server Error:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "Failed to analyze image", analysis: "サーバー内でエラーが発生しました。" })
+            body: JSON.stringify({ error: "Failed to analyze", analysis: "エラーが発生しました。" })
         };
     }
 };
