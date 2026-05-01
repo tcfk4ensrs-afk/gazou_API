@@ -317,29 +317,53 @@
             const v = document.getElementById("video"); 
             const c = document.getElementById("canvas");
             const ctx = c.getContext("2d");
+            
+            // 撮影ボタンを取得し、判定中に「判定中...」と表示させる
+            // event.targetだと子要素を拾う可能性があるため、querySelectorを使用
+            const btn = document.querySelector("#capture-section .action-btn");
+            const originalBtnText = btn.innerText;
+
             c.width = v.videoWidth; 
             c.height = v.videoHeight; 
             ctx.drawImage(v, 0, 0);
             
             const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
+
+            // UIの更新：ボタンを無効化
+            btn.innerText = "AI判定中...";
+            btn.disabled = true;
+
             try {
                 const response = await fetch('/.netlify/functions/analyze', { 
                     method: 'POST', 
                     body: JSON.stringify({ target: MASTER[current].target, image: imgData }) 
                 });
                 const data = await response.json();
+                
+                // AIからの詳細な理由（analysis）を取得。なければデフォルト文。
+                const aiReason = data.analysis || "理由は取得できませんでした。";
+
                 if (data.result && data.result.toUpperCase().includes("YES")) {
-                    MASTER[current].identified = true; save();
+                    // 成功時もAIのコメントを表示（任意で消してもOKですが、褒めてくれることもあります）
+                    alert(`【判定成功！】\nAIの回答: ${aiReason}`);
+
+                    MASTER[current].identified = true; 
+                    save();
                     document.getElementById("capture-section").style.display = "none"; 
                     document.getElementById("riddle-section").style.display = "block";
                     document.getElementById("riddle-image").src = MASTER[current].riddle;
                 } else { 
-                    alert("判定失敗"); 
+                    // 失敗時にAIからのアドバイスを表示
+                    alert(`【判定失敗】\nAIのアドバイス: ${aiReason}\n\n※もう少し近づくか、明るい場所で試してください。`); 
                     ctx.clearRect(0, 0, c.width, c.height);
                 }
             } catch (e) { 
-                alert("AI Error"); 
+                alert("AI Error: 判定に失敗しました。"); 
                 ctx.clearRect(0, 0, c.width, c.height);
+            } finally {
+                // 通信が終わったらボタンを元に戻す
+                btn.innerText = originalBtnText;
+                btn.disabled = false;
             }
         }
 
