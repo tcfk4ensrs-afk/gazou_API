@@ -289,8 +289,16 @@
             items--; MASTER[i].identified = true; itemMode = false; save(); updateUI(); render(); openModal(i);
         }
 
+       // --- 前略（DEFAULT_DATA等は変更なし） ---
+
         async function openModal(i) {
             current = i; const d = MASTER[i];
+            
+            // 【追加】モーダルを開く際にCanvasをクリアし、前回の画像を消す
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             document.getElementById("modal-title").innerText = d.target; document.getElementById("modal").style.display = "block";
             document.getElementById("target-selection-area").style.display = "none"; document.getElementById("check-ans-btn").disabled = false;
             if(d.identified) {
@@ -304,7 +312,8 @@
 
         async function analyzeSpot() {
             const v = document.getElementById("video"); const c = document.getElementById("canvas");
-            c.width = v.videoWidth; c.height = v.videoHeight; c.getContext("2d").drawImage(v, 0, 0);
+            const ctx = c.getContext("2d"); // Contextを取得
+            c.width = v.videoWidth; c.height = v.videoHeight; ctx.drawImage(v, 0, 0);
             const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
             try {
                 const response = await fetch('/.netlify/functions/analyze', { method: 'POST', body: JSON.stringify({ target: MASTER[current].target, image: imgData }) });
@@ -313,9 +322,19 @@
                     MASTER[current].identified = true; save();
                     document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
                     document.getElementById("riddle-image").src = MASTER[current].riddle;
-                } else { alert("判定失敗"); }
-            } catch (e) { alert("AI Error"); }
+                } else { 
+                    alert("判定失敗"); 
+                    // 【追加】判定失敗時にCanvasをクリアしてカメラ映像に戻す
+                    ctx.clearRect(0, 0, c.width, c.height);
+                }
+            } catch (e) { 
+                alert("AI Error"); 
+                // 【追加】エラー時にCanvasをクリアしてカメラ映像に戻す
+                ctx.clearRect(0, 0, c.width, c.height);
+            }
         }
+
+// --- 後略 ---
 
         function checkBingo() {
             const p = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
