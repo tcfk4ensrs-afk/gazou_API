@@ -17,6 +17,11 @@
         .item-inventory { width: 95%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid gold; box-sizing: border-box; }
         .item-btn { background: linear-gradient(135deg, gold, #f39c12); color: black; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
 
+        /* ヒントサイト用ボタンスタイル */
+        .hint-nav { width: 95%; max-width: 400px; margin-bottom: 10px; }
+        .btn-hint-site { display: block; text-align: center; background: rgba(79, 172, 254, 0.1); border: 1px solid #4facfe; color: #4facfe; padding: 10px; border-radius: 10px; text-decoration: none; font-size: 0.8rem; font-weight: bold; transition: 0.3s; }
+        .btn-hint-site:hover { background: rgba(79, 172, 254, 0.2); }
+
         .reset-area { width: 95%; max-width: 400px; display: flex; gap: 10px; margin-bottom: 15px; }
         .btn-soft-reset { flex: 1; background: rgba(255,255,255,0.05); color: #aaa; border: 1px solid #444; padding: 8px; font-size: 0.6rem; border-radius: 5px; cursor: pointer; }
 
@@ -29,7 +34,6 @@
         #solution-deck { display: none; width: 95%; max-width: 400px; margin-top: 20px; }
         .solution-card { background: rgba(255,255,255,0.05); border-left: 4px solid var(--theme); margin-bottom: 8px; padding: 10px; border-radius: 8px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
 
-        /* グリッチ演出用スタイル */
         @keyframes glitch-anim {
             0% { transform: translate(0); filter: hue-rotate(0deg); }
             20% { transform: translate(-10px, 5px); filter: invert(1); }
@@ -67,6 +71,11 @@
             <span id="item-count" style="font-size: 1.2rem; font-weight: bold;">0</span>
         </div>
         <button id="use-item-btn" class="item-btn" onclick="toggleItemMode()">アイテムを使う</button>
+    </div>
+
+    <!-- 追加されたヒントサイトへのリンク -->
+    <div class="hint-nav">
+        <a href="hint.html" class="btn-hint-site">💡 公式ヒントサイトを見る</a>
     </div>
 
     <div class="reset-area">
@@ -207,7 +216,7 @@
             if (isCrossChoice && okT) {
                 if (route !== 'cross') {
                     route = 'cross';
-                    triggerGlitch(); // グリッチ＆リセット演出
+                    triggerGlitch(); 
                 }
             } else if (isSelfChoice && okN) {
                 if (route === 'cross') return alert("警告：正規解答は拒否されました。連鎖先を選択してください。");
@@ -221,14 +230,12 @@
 
         function triggerGlitch() {
             document.body.classList.add("glitch-active");
-            
-            // 重要：ここでノーマル解答で開放したマスをリセット
             MASTER.forEach(d => {
                 d.solved = false; 
                 d.riddleCleared = false;
             });
-            lines = []; // ビンゴラインもリセット
-            items = 0;  // アイテムもリセット
+            lines = []; 
+            items = 0; 
 
             setTimeout(() => {
                 document.body.classList.remove("glitch-active");
