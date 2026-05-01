@@ -17,7 +17,6 @@
         .item-inventory { width: 95%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid gold; box-sizing: border-box; }
         .item-btn { background: linear-gradient(135deg, gold, #f39c12); color: black; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
 
-        /* ヒントサイト用ボタンスタイル */
         .hint-nav { width: 95%; max-width: 400px; margin-bottom: 10px; }
         .btn-hint-site { display: block; text-align: center; background: rgba(79, 172, 254, 0.1); border: 1px solid #4facfe; color: #4facfe; padding: 10px; border-radius: 10px; text-decoration: none; font-size: 0.8rem; font-weight: bold; transition: 0.3s; }
         .btn-hint-site:hover { background: rgba(79, 172, 254, 0.2); }
@@ -73,7 +72,6 @@
         <button id="use-item-btn" class="item-btn" onclick="toggleItemMode()">アイテムを使う</button>
     </div>
 
-    <!-- 追加されたヒントサイトへのリンク -->
     <div class="hint-nav">
         <a href="hint.html" class="btn-hint-site">💡 公式ヒントサイトを見る</a>
     </div>
@@ -254,7 +252,7 @@
 
             if(route === 'self') {
                 title.innerText = "NORMAL END";
-                msg.innerText = "クリア率80％/nビンゴの下に手がかりを表示しました。/n問題の答えがすべて入れ替わって/nいくつかの問題については問題ごとすり替わっているみたいです。";
+                msg.innerText = "クリア率80％\nビンゴの下に手がかりを表示しました。\n問題の答えがすべて入れ替わって\nいくつかの問題については問題ごとすり替わっているみたいです。";
                 deck.style.display = "block";
                 deck.innerHTML = `<h3 style="color: gold; font-size: 0.8rem; border-bottom: 1px solid #444; margin-bottom: 10px;">COLLECTED HINTS</h3>`;
                 MASTER.forEach((d, i) => {
@@ -284,57 +282,66 @@
         function resetGame() { if(confirm("全データを削除して初期化しますか？")) { localStorage.clear(); location.reload(); } }
 
         function toggleItemMode() { itemMode = !itemMode; updateUI(); }
+        
         function useItem(i) {
             if(MASTER[i].identified || MASTER[i].solved) return;
             items--; MASTER[i].identified = true; itemMode = false; save(); updateUI(); render(); openModal(i);
         }
 
-       // --- 前略（DEFAULT_DATA等は変更なし） ---
-
         async function openModal(i) {
             current = i; const d = MASTER[i];
             
-            // 【追加】モーダルを開く際にCanvasをクリアし、前回の画像を消す
+            // Canvasをリセット
             const canvas = document.getElementById("canvas");
             const ctx = canvas.getContext("2d");
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            document.getElementById("modal-title").innerText = d.target; document.getElementById("modal").style.display = "block";
-            document.getElementById("target-selection-area").style.display = "none"; document.getElementById("check-ans-btn").disabled = false;
+            document.getElementById("modal-title").innerText = d.target; 
+            document.getElementById("modal").style.display = "block";
+            document.getElementById("target-selection-area").style.display = "none"; 
+            document.getElementById("check-ans-btn").disabled = false;
+            
             if(d.identified) {
-                document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
+                document.getElementById("capture-section").style.display = "none"; 
+                document.getElementById("riddle-section").style.display = "block";
                 document.getElementById("riddle-image").src = d.riddle;
             } else {
-                document.getElementById("capture-section").style.display = "block"; document.getElementById("riddle-section").style.display = "none";
-                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); document.getElementById("video").srcObject = s;
+                document.getElementById("capture-section").style.display = "block"; 
+                document.getElementById("riddle-section").style.display = "none";
+                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); 
+                document.getElementById("video").srcObject = s;
             }
         }
 
         async function analyzeSpot() {
-            const v = document.getElementById("video"); const c = document.getElementById("canvas");
-            const ctx = c.getContext("2d"); // Contextを取得
-            c.width = v.videoWidth; c.height = v.videoHeight; ctx.drawImage(v, 0, 0);
+            const v = document.getElementById("video"); 
+            const c = document.getElementById("canvas");
+            const ctx = c.getContext("2d");
+            c.width = v.videoWidth; 
+            c.height = v.videoHeight; 
+            ctx.drawImage(v, 0, 0);
+            
             const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
             try {
-                const response = await fetch('/.netlify/functions/analyze', { method: 'POST', body: JSON.stringify({ target: MASTER[current].target, image: imgData }) });
+                const response = await fetch('/.netlify/functions/analyze', { 
+                    method: 'POST', 
+                    body: JSON.stringify({ target: MASTER[current].target, image: imgData }) 
+                });
                 const data = await response.json();
                 if (data.result && data.result.toUpperCase().includes("YES")) {
                     MASTER[current].identified = true; save();
-                    document.getElementById("capture-section").style.display = "none"; document.getElementById("riddle-section").style.display = "block";
+                    document.getElementById("capture-section").style.display = "none"; 
+                    document.getElementById("riddle-section").style.display = "block";
                     document.getElementById("riddle-image").src = MASTER[current].riddle;
                 } else { 
                     alert("判定失敗"); 
-                    // 【追加】判定失敗時にCanvasをクリアしてカメラ映像に戻す
                     ctx.clearRect(0, 0, c.width, c.height);
                 }
             } catch (e) { 
                 alert("AI Error"); 
-                // 【追加】エラー時にCanvasをクリアしてカメラ映像に戻す
                 ctx.clearRect(0, 0, c.width, c.height);
             }
         }
-
-// --- 後略 ---
 
         function checkBingo() {
             const p = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
@@ -371,6 +378,7 @@
             else if (input === "もう限界") { limitMode = true; alert("回答表示モード。"); }
             document.getElementById("command-input").value = "";
         }
+        
         function showCheatAnswer(i) { alert(`答: ${Array.isArray(MASTER[i].answer) ? MASTER[i].answer[0] : MASTER[i].answer}`); limitMode = false; }
 
         load();
