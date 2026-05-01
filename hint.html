@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公式ヒントサイト | 全16問</title>
+    <style>
+        :root { --primary: #333; --accent: #007bff; --bg: #f8f9fa; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        
+        /* 問題ごとの枠組み */
+        .puzzle-card { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; overflow: hidden; }
+        .puzzle-header { background: #eee; padding: 15px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
+        .puzzle-header:hover { background: #e5e5e5; }
+        .puzzle-body { display: none; padding: 20px; border-top: 1px solid #ddd; }
+        
+        /* 画像とボタン */
+        .puzzle-image { width: 100%; max-width: 400px; height: auto; border-radius: 4px; margin-bottom: 15px; border: 1px solid #eee; }
+        .btn-group { margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; }
+        button { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-h { background: var(--accent); color: white; }
+        .btn-a { background: #d9534f; color: white; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* ヒント表示エリア */
+        .hint-box { display: none; background: #f0f7ff; border-left: 5px solid var(--accent); padding: 12px; margin-top: 10px; animation: fadeIn 0.3s; }
+        .ans-box { display: none; background: #fff5f5; border-left: 5px solid #d9534f; padding: 12px; margin-top: 10px; color: #d9534f; font-weight: bold; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .footer { text-align: center; margin-top: 40px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Mystery Game Hints</h1>
+    <p style="text-align:center;">行き詰まった問題の番号をタップしてください。</p>
+
+    <!-- 問題リストをJavaScriptで動的に生成することも可能ですが、
+         カスタマイズしやすいようHTMLで16個並べる構成にします。 -->
+
+    <div id="puzzle-list">
+        <!-- 謎1 -->
+        <div class="puzzle-card">
+            <div class="puzzle-header" onclick="togglePuzzle(1)">謎 01：はじまりの部屋 <span>▼</span></div>
+            <div class="puzzle-body" id="body-1">
+                <img src="images/1.png" class="puzzle-image" alt="謎01">
+                <div class="btn-group">
+                    <button class="btn-h" onclick="showHint(1, 1)">ヒント1</button>
+                    <button class="btn-h" onclick="showHint(1, 2)">ヒント2</button>
+                    <button class="btn-a" onclick="showHint(1, 'ans')">答え</button>
+                </div>
+                <div id="h1-1" class="hint-box">ヒント1：壁の絵の向きを確認しましょう。</div>
+                <div id="h1-2" class="hint-box">ヒント2：額縁の裏を調べてみてください。</div>
+                <div id="ans-1" class="ans-box">答え：1234</div>
+            </div>
+        </div>
+
+        <!-- 謎2から謎15までは同様の構造で追加 -->
+        <!-- 例：謎2 -->
+        <div class="puzzle-card">
+            <div class="puzzle-header" onclick="togglePuzzle(2)">謎 02：古びた手記 <span>▼</span></div>
+            <div class="puzzle-body" id="body-2">
+                <img src="images/2.png" class="puzzle-image" alt="謎02">
+                <div class="btn-group">
+                    <button class="btn-h" onclick="showHint(2, 1)">ヒント1</button>
+                    <button class="btn-a" onclick="showHint(2, 'ans')">答え</button>
+                </div>
+                <div id="h2-1" class="hint-box">ヒント1：破れたページの断片を組み合わせてください。</div>
+                <div id="ans-2" class="ans-box">答え：西の窓</div>
+            </div>
+        </div>
+
+        <!-- ... ここに謎3〜15を追加 ... -->
+
+        <!-- 謎16（最終問題） -->
+        <div class="puzzle-card">
+            <div class="puzzle-header" onclick="togglePuzzle(16)">謎 16：最後の真実 <span>▼</span></div>
+            <div class="puzzle-body" id="body-16">
+                <img src="images/16.png" class="puzzle-image" alt="謎16">
+                <div class="btn-group">
+                    <button class="btn-h" onclick="showHint(16, 1)">ヒント1</button>
+                    <button class="btn-a" onclick="showHint(16, 'ans')">答え</button>
+                </div>
+                <div id="h16-1" class="hint-box">ヒント1：これまでの15個の答えを繋げて読みましょう。</div>
+                <div id="ans-16" class="ans-box">答え：ミライノトビラ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button onclick="location.href='index2.html'" style="background:#666; color:white;">ゲームに戻る</button>
+    </div>
+</div>
+
+<script>
+    // アコーディオンの開閉
+    function togglePuzzle(id) {
+        const body = document.getElementById(`body-${id}`);
+        const isVisible = body.style.display === 'block';
+        
+        // 他を閉じる場合はここを調整
+        body.style.display = isVisible ? 'none' : 'block';
+    }
+
+    // ヒントの表示
+    function showHint(puzzleId, type) {
+        const elementId = type === 'ans' ? `ans-${puzzleId}` : `h${puzzleId}-${type}`;
+        const target = document.getElementById(elementId);
+        if (target) {
+            target.style.display = 'block';
+        }
+    }
+</script>
+
+</body>
+</html>
