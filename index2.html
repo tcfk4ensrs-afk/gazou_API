@@ -313,7 +313,13 @@
             }
         }
 
-        async function analyzeSpot() {
+        // 関数の外（スクリプトの冒頭など）にフラグを定義
+let isAnalyzing = false;
+
+async function analyzeSpot() {
+    // 【追加】すでに解析中の場合は処理を中断（二重送信を物理的に防ぐ）
+    if (isAnalyzing) return;
+
     const v = document.getElementById("video"); 
     const c = document.getElementById("canvas");
     const ctx = c.getContext("2d");
@@ -321,12 +327,17 @@
     const btn = document.querySelector("#capture-section .action-btn");
     const originalBtnText = btn.innerText;
 
-    c.width = v.videoWidth; 
-    c.height = v.videoHeight; 
-    ctx.drawImage(v, 0, 0);
+    // 【追加】リサイズ：AI判定には高解像度は不要なため、長辺を640pxに抑える
+    const scale = Math.min(1, 640 / Math.max(v.videoWidth, v.videoHeight));
+    c.width = v.videoWidth * scale;
+    c.height = v.videoHeight * scale;
+    ctx.drawImage(v, 0, 0, c.width, c.height);
     
-    const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
+    // 【追加】画質を0.5に落として通信量を削減（判定精度には影響しません）
+    const imgData = c.toDataURL("image/jpeg", 0.5).split(",")[1];
 
+    // フラグを立て、ボタンを無効化
+    isAnalyzing = true;
     btn.innerText = "AI解析中...";
     btn.disabled = true;
 
@@ -337,21 +348,16 @@
         });
         
         const data = await response.json();
-        
-        // AIの言語化テキスト。data.analysisがない場合はエラー詳細、それもなければデフォルト文を表示。
         const aiAnalysis = data.analysis || (data.error ? `エラー: ${data.error}` : "AIが映像を認識できませんでした。");
 
         if (data.result && data.result.toUpperCase().includes("YES")) {
-            // 合格時
             alert(`【判定成功！】\nAIの分析: 「${aiAnalysis}」`);
-
             MASTER[current].identified = true; 
             save();
             document.getElementById("capture-section").style.display = "none"; 
             document.getElementById("riddle-section").style.display = "block";
             document.getElementById("riddle-image").src = MASTER[current].riddle;
         } else { 
-            // 失敗時（ここが重要：どんな写真でもAIがどう見ているかを表示）
             alert(`【判定失敗】\nAIにはこう見えています:\n「${aiAnalysis}」\n\n※「${MASTER[current].target}」が写るように撮り直してください。`); 
             ctx.clearRect(0, 0, c.width, c.height);
         }
@@ -359,6 +365,8 @@
         alert(`システムエラー: 通信に失敗しました。\n詳細: ${e.message}`); 
         ctx.clearRect(0, 0, c.width, c.height);
     } finally {
+        // 【追加】フラグを戻して再試行を可能にする
+        isAnalyzing = false;
         btn.innerText = originalBtnText;
         btn.disabled = false;
     }
