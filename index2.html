@@ -314,58 +314,55 @@
         }
 
         async function analyzeSpot() {
-            const v = document.getElementById("video"); 
-            const c = document.getElementById("canvas");
-            const ctx = c.getContext("2d");
-            
-            // 撮影ボタンを取得し、判定中に「判定中...」と表示させる
-            // event.targetだと子要素を拾う可能性があるため、querySelectorを使用
-            const btn = document.querySelector("#capture-section .action-btn");
-            const originalBtnText = btn.innerText;
+    const v = document.getElementById("video"); 
+    const c = document.getElementById("canvas");
+    const ctx = c.getContext("2d");
+    
+    const btn = document.querySelector("#capture-section .action-btn");
+    const originalBtnText = btn.innerText;
 
-            c.width = v.videoWidth; 
-            c.height = v.videoHeight; 
-            ctx.drawImage(v, 0, 0);
-            
-            const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
+    c.width = v.videoWidth; 
+    c.height = v.videoHeight; 
+    ctx.drawImage(v, 0, 0);
+    
+    const imgData = c.toDataURL("image/jpeg", 0.7).split(",")[1];
 
-            // UIの更新：ボタンを無効化
-            btn.innerText = "AI判定中...";
-            btn.disabled = true;
+    // UI更新：ボタン無効化
+    btn.innerText = "AI判定中...";
+    btn.disabled = true;
 
-            try {
-                const response = await fetch('/.netlify/functions/analyze', { 
-                    method: 'POST', 
-                    body: JSON.stringify({ target: MASTER[current].target, image: imgData }) 
-                });
-                const data = await response.json();
-                
-                // AIからの詳細な理由（analysis）を取得。なければデフォルト文。
-                const aiReason = data.analysis || "理由は取得できませんでした。";
+    try {
+        const response = await fetch('/.netlify/functions/analyze', { 
+            method: 'POST', 
+            body: JSON.stringify({ target: MASTER[current].target, image: imgData }) 
+        });
+        const data = await response.json();
+        
+        // AIが画像を見て判断した内容（説明文）
+        const aiAnalysis = data.analysis || "解析結果が得られませんでした。";
 
-                if (data.result && data.result.toUpperCase().includes("YES")) {
-                    // 成功時もAIのコメントを表示（任意で消してもOKですが、褒めてくれることもあります）
-                    alert(`【判定成功！】\nAIの回答: ${aiReason}`);
+        if (data.result && data.result.toUpperCase().includes("YES")) {
+            // 合格時：AIが何を見つけたかを表示
+            alert(`【判定成功！】\nAIの認識: 「${aiAnalysis}」`);
 
-                    MASTER[current].identified = true; 
-                    save();
-                    document.getElementById("capture-section").style.display = "none"; 
-                    document.getElementById("riddle-section").style.display = "block";
-                    document.getElementById("riddle-image").src = MASTER[current].riddle;
-                } else { 
-                    // 失敗時にAIからのアドバイスを表示
-                    alert(`【判定失敗】\nAIのアドバイス: ${aiReason}\n\n※もう少し近づくか、明るい場所で試してください。`); 
-                    ctx.clearRect(0, 0, c.width, c.height);
-                }
-            } catch (e) { 
-                alert("AI Error: 判定に失敗しました。"); 
-                ctx.clearRect(0, 0, c.width, c.height);
-            } finally {
-                // 通信が終わったらボタンを元に戻す
-                btn.innerText = originalBtnText;
-                btn.disabled = false;
-            }
+            MASTER[current].identified = true; 
+            save();
+            document.getElementById("capture-section").style.display = "none"; 
+            document.getElementById("riddle-section").style.display = "block";
+            document.getElementById("riddle-image").src = MASTER[current].riddle;
+        } else { 
+            // 失敗時：AIには何が見えていたかを表示
+            alert(`【判定失敗】\nAIの認識: 「${aiAnalysis}」\n\n※ターゲットが画面に大きく写るように撮り直してください。`); 
+            ctx.clearRect(0, 0, c.width, c.height);
         }
+    } catch (e) { 
+        alert("AI Error: 通信エラーが発生しました。"); 
+        ctx.clearRect(0, 0, c.width, c.height);
+    } finally {
+        btn.innerText = originalBtnText;
+        btn.disabled = false;
+    }
+}
 
         function checkBingo() {
             const p = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
